@@ -129,42 +129,77 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- Firebase 설정 ---
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // ============================================================================
+        // 🔴 [중요] 깃허브 배포 시 아래 myFirebaseConfig 안에 본인의 Firebase 설정값을 채워주세요.
+        // ============================================================================
+        const myFirebaseConfig = {
+            apiKey: "AIzaSyBt1EDNuvgBU_a5zvTeBo82M-pCqFiMhRs",
+            authDomain: "browser-771c8.firebaseapp.com",
+            projectId: "browser-771c8",
+            storageBucket: "browser-771c8.firebasestorage.app",
+            messagingSenderId: "1041278689682",
+            appId: "1:1041278689682:web:b8d4273a7a62e21982614b"
+        };
+        // ============================================================================
 
+        let auth = null;
+        let db = null;
         let currentUser = null;
         let allScores = [];
+        
+        // 캔버스 환경에서는 내장된 __app_id를, 외부에서는 임의의 고유 ID를 사용합니다.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'digital-explorer-arcade';
 
-        // Auth Init
-        const initAuth = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch(e) { console.warn("Auth init failed", e); }
-        };
-        initAuth();
+        try {
+            // 캔버스 내부 환경변수 확인
+            let configStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+            let activeConfig = myFirebaseConfig;
+            
+            if (configStr && configStr.length > 0) {
+                try {
+                    activeConfig = JSON.parse(configStr);
+                } catch(e) { console.warn("Invalid internal config", e); }
+            }
+            
+            // 설정값이 비어있지 않은 경우에만 Firebase 초기화 진행
+            if (activeConfig && Object.keys(activeConfig).length > 0 && activeConfig.apiKey !== "") {
+                const app = initializeApp(activeConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
 
-        onAuthStateChanged(auth, (user) => {
-            currentUser = user;
-            // 실시간 리스너(onSnapshot)를 제거하고 여기서 초기 자동 조회를 하지 않음.
-        });
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            // 깃허브에서는 익명 로그인으로 동작합니다.
+                            await signInAnonymously(auth);
+                        }
+                    } catch(e) { console.warn("Auth init failed", e); }
+                };
+                initAuth();
 
-        // 수동으로 리더보드를 불러오는 함수 (읽기 사용량 최적화)
+                onAuthStateChanged(auth, (user) => {
+                    currentUser = user;
+                });
+            } else {
+                console.warn("데이터베이스 설정이 없어 랭킹 기능이 비활성화된 채로 게임이 시작됩니다.");
+            }
+        } catch (error) {
+            console.error("Firebase 초기화 에러:", error);
+        }
+
+        // 수동으로 리더보드를 불러오는 함수
         async function fetchLeaderboard() {
             const listEl = document.getElementById('leaderboard-list');
-            listEl.innerHTML = '<div class="text-center text-gray-500">불러오는 중...</div>';
             
-            if (!currentUser) {
-                listEl.innerHTML = '<div class="text-center text-red-500">네트워크 연결이 필요합니다.</div>';
+            // 데이터베이스(db)가 없으면 안내 문구 띄우고 종료
+            if (!db) {
+                listEl.innerHTML = '<div class="text-center text-gray-500 text-xs">서버 설정이 없어 랭킹이 표시되지 않습니다.<br>(Firebase 연동 필요)</div>';
                 return;
             }
+
+            listEl.innerHTML = '<div class="text-center text-gray-500">불러오는 중...</div>';
 
             try {
                 const scoresRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
@@ -196,10 +231,18 @@
         }
 
         async function submitScore() {
+            const btn = document.getElementById('submit-score-btn');
+            
+            // 데이터베이스가 없으면 저장 불가 처리
+            if (!db) {
+                btn.textContent = '저장 불가 (서버 없음)';
+                setTimeout(() => { document.getElementById('name-entry').classList.add('hidden'); }, 1000);
+                return;
+            }
+
             if (!currentUser) return;
             const nameInput = document.getElementById('player-name');
             const name = nameInput.value.trim();
-            const btn = document.getElementById('submit-score-btn');
             const errorEl = document.getElementById('name-error');
             
             // 이름 필터링 (한글/영문/숫자 1~8자)
@@ -222,8 +265,6 @@
                     timestamp: Date.now()
                 });
                 document.getElementById('name-entry').classList.add('hidden');
-                
-                // 저장 후 최신 랭킹 1회 재조회
                 await fetchLeaderboard();
             } catch (e) {
                 console.warn("Score save failed", e);
@@ -265,9 +306,10 @@
         let fwAnimationId = null;
         let fwParticles = [];
         let isWinning = false;
-        let gameLoopAnimId = null; // 게임 루프 최적화용 애니메이션 ID
+        let gameLoopAnimId = null;
 
         function resize() { 
+            // Fallback for innerWidth/innerHeight being 0 in some iframe states
             W = canvas.width = window.innerWidth || 800; 
             H = canvas.height = window.innerHeight || 600; 
             if(player && !gameRunning) { player.x = W/2; player.y = H-80; }
@@ -540,7 +582,6 @@
             for (let i = 0; i < count; i++) {
                 particles.push({ x, y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 25+Math.random()*20, color, size: Math.random()*4+1 });
             }
-            // 성능 최적화: 파티클 수 제한
             if (particles.length > 300) {
                 particles.splice(0, particles.length - 300);
             }
@@ -1051,7 +1092,6 @@
                 }
                 return b.x > -20 && b.x < W+20 && b.y > -20 && b.y < H+20;
             });
-            // 성능 최적화: 적 총알 수 제한
             if (enemyBullets.length > 200) enemyBullets.splice(0, enemyBullets.length - 200);
 
             drawFloatingTexts();
