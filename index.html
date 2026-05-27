@@ -1,1034 +1,1003 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>디지털 탐험대 아케이드</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Jua&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Jua', 'Space Mono', sans-serif; overflow: hidden; background: #0b0c10; touch-action: none; }
-canvas { display: block; width: 100vw; height: 100vh; }
-.screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
-.hidden { display: none !important; }
-.pixel-border { border: 4px solid #0ff; border-radius: 20px; box-shadow: 0 0 15px rgba(0,255,255,0.4); }
-.btn { padding: 12px 32px; font-family: 'Jua', sans-serif; font-size: 20px; cursor: pointer; transition: transform 0.1s; background: rgba(0,0,0,0.8); color: #fff; border-radius: 30px; }
-.btn:hover { transform: scale(1.05); }
-.btn:active { transform: scale(0.95); }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>디지털 탐험대 아케이드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Jua', 'Space Mono', sans-serif; overflow: hidden; background: #0b0c10; touch-action: none; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+        .screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        .hidden { display: none !important; }
+        .pixel-border { border: 4px solid #0ff; border-radius: 20px; box-shadow: 0 0 15px rgba(0,255,255,0.4); }
+        .btn { padding: 12px 32px; font-family: 'Jua', sans-serif; font-size: 20px; cursor: pointer; transition: transform 0.1s; background: rgba(0,0,0,0.8); color: #fff; border-radius: 30px; }
+        .btn:hover { transform: scale(1.05); }
+        .btn:active { transform: scale(0.95); }
         .quiz-option { width: 100%; padding: 12px 16px; text-align: center; font-family: 'Jua', sans-serif; font-size: 22px; cursor: pointer; border: 2px solid #555; border-radius: 15px; margin: 6px 0; transition: background 0.15s; color: #fff; background: #222; word-break: keep-all;}
-        .quiz-option { width: 100%; padding: 12px 16px; text-align: center; font-family: 'Jua', sans-serif; font-size: 22px; cursor: pointer; border: 2px solid #555; border-radius: 15px; margin: 6px 0; background: rgba(0,0,0,0.7); color: #fff; }
-.quiz-option:hover:not(:disabled) { background: #444; }
+        .quiz-option:hover:not(:disabled) { background: #444; }
+        
+        #hud { position: absolute; top: 15px; left: 15px; right: 15px; z-index: 6; display: flex; justify-content: space-between; font-size: 18px; color: #0f0; text-shadow: 0 0 8px #0f0; pointer-events: none; }
+        
+        .star-text { animation: blink 1.5s infinite alternate; }
+        @keyframes blink { 0% { opacity: 0.3; } 100% { opacity: 1; } }
+        
+        @keyframes popIn { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .pop-in { animation: popIn 0.3s ease-out; }
+        
+        /* 피격 흔들림 효과 */
+        .shake { animation: shake 0.4s; }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
 
-#hud { position: absolute; top: 15px; left: 15px; right: 15px; z-index: 6; display: flex; justify-content: space-between; font-size: 18px; color: #0f0; text-shadow: 0 0 8px #0f0; pointer-events: none; }
-
-.star-text { animation: blink 1.5s infinite alternate; }
-@keyframes blink { 0% { opacity: 0.3; } 100% { opacity: 1; } }
-
-@keyframes popIn { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-.pop-in { animation: popIn 0.3s ease-out; }
-
-/* 피격 흔들림 효과 */
-.shake { animation: shake 0.4s; }
-@keyframes shake {
-0% { transform: translate(1px, 1px) rotate(0deg); }
-20% { transform: translate(-3px, 0px) rotate(1deg); }
-40% { transform: translate(1px, -1px) rotate(1deg); }
-60% { transform: translate(-3px, 1px) rotate(0deg); }
-80% { transform: translate(-1px, -1px) rotate(1deg); }
-100% { transform: translate(1px, -2px) rotate(-1deg); }
-}
-
-/* 폭탄 플래시 효과 */
-.flash-anim { animation: flashScreen 0.4s ease-out; }
-@keyframes flashScreen {
-0% { background-color: rgba(255, 255, 255, 1); }
-100% { background-color: rgba(255, 255, 255, 0); }
-}
-</style>
+        /* 폭탄 플래시 효과 */
+        .flash-anim { animation: flashScreen 0.4s ease-out; }
+        @keyframes flashScreen {
+            0% { background-color: rgba(255, 255, 255, 1); }
+            100% { background-color: rgba(255, 255, 255, 0); }
+        }
+    </style>
 </head>
 <body>
-<div id="game-container">
-<!-- HUD -->
-<div id="hud" class="hidden">
-<div>
-SCORE: <span id="score-display">0</span><br>
-<span class="text-sm text-red-400">BOMBS: <span id="bomb-display">0</span> (8번 키)</span>
-</div>
-<div class="lives-display text-right">
-LIVES: <span id="lives-display"></span><br>
-<span style="font-size:14px;color:#aaa;">부활 기회: <span id="revive-display">3</span>/3</span>
-</div>
-</div>
+    <div id="game-container">
+        <!-- HUD -->
+        <div id="hud" class="hidden">
+            <div>
+                SCORE: <span id="score-display">0</span><br>
+                <span class="text-sm text-red-400">BOMBS: <span id="bomb-display">0</span> (8번 키)</span>
+            </div>
+            <div class="lives-display text-right">
+                LIVES: <span id="lives-display"></span><br>
+                <span style="font-size:14px;color:#aaa;">부활 기회: <span id="revive-display">3</span>/3</span>
+            </div>
+        </div>
 
-<canvas id="gameCanvas"></canvas>
-<div id="flash-overlay" class="absolute inset-0 pointer-events-none z-20"></div>
+        <canvas id="gameCanvas"></canvas>
+        <div id="flash-overlay" class="absolute inset-0 pointer-events-none z-20"></div>
 
-<!-- Start Screen -->
-<div id="title-screen" class="screen" style="background:rgba(0,0,0,0.85)">
-<div class="text-center px-4 max-w-3xl">
+        <!-- Start Screen -->
+        <div id="title-screen" class="screen" style="background:rgba(0,0,0,0.85)">
+            <div class="text-center px-4 max-w-3xl">
                 <h1 class="text-4xl md:text-6xl font-bold mb-2 leading-tight" style="color:#0ff; text-shadow:0 0 20px #0ff, 0 0 40px #08f; word-break: keep-all;">브라우저로 정보 검색하기<br><span class="text-3xl md:text-5xl text-yellow-300">학습 게임</span></h1>
-                <h1 class="text-4xl md:text-6xl font-bold mb-2 leading-tight" style="color:#0ff; text-shadow:0 0 20px #0ff, 0 0 40px #08f; word-break: keep-all;">브라우저로 정보 검색하기</h1>
-
-<!-- 불필요한 읽기 방지를 위해 정적 텍스트로 수정 -->
-<div class="text-yellow-400 text-sm mb-4 h-5">디지털 탐험대 아케이드에 오신 것을 환영합니다!</div>
-
-<!-- 게임 설명 박스 -->
-<div class="mb-6 bg-black/60 p-4 rounded-xl border-2 border-gray-700 text-left text-sm md:text-lg space-y-3 mx-auto w-full max-w-lg font-bold">
-                    <p class="text-white"><span class="text-cyan-400">⌨️ 조종법:</span> 방향키/WASD 이동, SPACE 발사, <span class="text-red-400">숫자 '8' 폭탄</span><br><span class="text-xs text-gray-400 font-normal">(모바일: 터치 드래그 시 자동 발사)</span></p>
-                    <p class="text-white"><span class="text-cyan-400">⌨️ 조종법:</span> 방향키/WASD 이동, SPACE 발사, <span class="text-red-400">숫자 '8' 폭탄</span><br><span class="text-xs text-gray-400 font-normal">마우스나 터치로도 조종 가능</span></p>
-<p class="text-white"><span class="text-yellow-400">⭐ 보너스 퀴즈:</span> 물음표 별을 맞추면 <span class="text-green-400">무기 강력 업그레이드!</span></p>
-                    <p class="text-white"><span class="text-pink-400">🎁 특별 보급품:</span> 적 30기마다 아이템 등장!<br><span class="text-xs text-gray-300 font-normal">👉 🛡️보호막 / 🚁보조 도우미 / 💣화면 파괴 폭탄</span></p>
-                    <p class="text-white"><span class="text-pink-400">🎁 특별 보급품:</span> 적 30기마다 아이템 등장!<br><span class="text-xs text-gray-300 font-normal">👉 🛡️보호막(3회) 🚁보조도우미(4개까지) 💣폭탄</span></p>
-<p class="text-white"><span class="text-red-500">👾 보스 전투:</span> 중간 보스를 넘으면 <span class="text-purple-400">극악의 최종 보스</span> 등장!</p>
-</div>
-
-<button id="start-btn" class="btn pixel-border">INSERT COIN (게임 시작)</button>
-</div>
-</div>
-
-<!-- Quiz Screen -->
-<div id="quiz-screen" class="screen hidden" style="background:rgba(0,0,50,0.95)">
-<div class="pixel-border p-8 max-w-2xl w-11/12 pop-in" style="background:#111">
-<h2 class="text-center text-3xl font-bold mb-4 blink star-text" style="color:#f00">SYSTEM HACKED!</h2>
-<p class="text-gray-400 text-base text-center mb-6">문제를 맞혀 시스템을 복구하세요</p>
-<p id="quiz-question" class="text-white text-2xl md:text-3xl mb-8 leading-relaxed font-bold break-keep"></p>
-<div id="quiz-options" class="space-y-3"></div>
-<div id="quiz-result" class="text-center mt-6 text-2xl font-bold hidden drop-shadow-md"></div>
-</div>
-</div>
-
-<!-- Game Over / Game Win Screen -->
-<div id="gameover-screen" class="screen hidden" style="background:rgba(0,0,0,0.9)">
-<canvas id="fireworksCanvas" class="absolute inset-0 z-0 pointer-events-none hidden"></canvas>
-
-<div class="text-center px-4 w-full max-w-sm relative z-10">
-<h1 id="gameover-title-text" class="text-4xl font-bold mb-6 leading-tight">GAME OVER</h1>
-
-<p class="text-2xl font-bold mb-6" style="color:#ff0" id="final-score"></p>
-
-<div id="name-entry" class="mb-4">
-<label for="player-name" class="text-gray-300 text-sm block mb-2">랭킹 등록 (한글/영문/숫자 1~8자)</label>
-                    <input id="player-name" type="text" maxlength="8" placeholder="이름 입력" class="bg-black border-2 border-gray-600 text-white px-3 py-2 text-center font-mono w-48 focus:border-cyan-400 outline-none mb-1">
-                    <input id="player-name" type="text" maxlength="8" placeholder="이름 입력" class="bg-black border-2 border-gray-600 text-white px-3 py-2 text-center font-mono w-48 focus:border-cyan-400">
-<div id="name-error" class="text-red-500 text-xs mb-2 hidden">이름 형식이 올바르지 않습니다.</div>
-<br>
-<button id="submit-score-btn" class="btn" style="background:#ff0; color:#000; padding: 8px 24px; font-size: 14px;">점수 저장</button>
-</div>
-
-<button id="restart-btn" class="btn pixel-border mt-2 w-48">다시 하기</button>
-
-<div id="leaderboard" class="mt-8 text-left mx-auto bg-black/50 p-4 border border-gray-800 rounded z-20 relative">
-<h3 class="text-center text-sm font-bold mb-3" style="color:#0ff">🏆 TOP 5 랭킹 🏆</h3>
-<div id="leaderboard-list" class="text-gray-300 text-sm space-y-2">
-<div class="text-center text-gray-500">불러오는 중...</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-
-<!-- Firebase & Game Logic -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-// ============================================================================
-// 🔴 [중요] 깃허브 배포 시 아래 myFirebaseConfig 안에 본인의 Firebase 설정값을 채워주세요.
-// ============================================================================
-const myFirebaseConfig = {
-apiKey: "AIzaSyBt1EDNuvgBU_a5zvTeBo82M-pCqFiMhRs",
-authDomain: "browser-771c8.firebaseapp.com",
-projectId: "browser-771c8",
-storageBucket: "browser-771c8.firebasestorage.app",
-messagingSenderId: "1041278689682",
-appId: "1:1041278689682:web:b8d4273a7a62e21982614b"
-};
-// ============================================================================
-
-let auth = null;
-let db = null;
-let currentUser = null;
-let allScores = [];
-
-// 캔버스 환경에서는 내장된 __app_id를, 외부에서는 임의의 고유 ID를 사용합니다.
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'digital-explorer-arcade';
-
-try {
-// 캔버스 내부 환경변수 확인
-let configStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
-let activeConfig = myFirebaseConfig;
-
-if (configStr && configStr.length > 0) {
-try {
-activeConfig = JSON.parse(configStr);
-} catch(e) { console.warn("Invalid internal config", e); }
-}
-
-// 설정값이 비어있지 않은 경우에만 Firebase 초기화 진행
-if (activeConfig && Object.keys(activeConfig).length > 0 && activeConfig.apiKey !== "") {
-const app = initializeApp(activeConfig);
-auth = getAuth(app);
-db = getFirestore(app);
-
-const initAuth = async () => {
-try {
-if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-await signInWithCustomToken(auth, __initial_auth_token);
-} else {
-// 깃허브에서는 익명 로그인으로 동작합니다.
-await signInAnonymously(auth);
-}
-} catch(e) { console.warn("Auth init failed", e); }
-};
-initAuth();
-
-onAuthStateChanged(auth, (user) => {
-currentUser = user;
-                    console.log("Auth state changed:", user ? "Logged in" : "Logged out");
-});
-} else {
-console.warn("데이터베이스 설정이 없어 랭킹 기능이 비활성화된 채로 게임이 시작됩니다.");
-}
-} catch (error) {
-console.error("Firebase 초기화 에러:", error);
-}
-
-// 수동으로 리더보드를 불러오는 함수
-async function fetchLeaderboard() {
-const listEl = document.getElementById('leaderboard-list');
-
-// 데이터베이스(db)가 없으면 안내 문구 띄우고 종료
-if (!db) {
-listEl.innerHTML = '<div class="text-center text-gray-500 text-xs">서버 설정이 없어 랭킹이 표시되지 않습니다.<br>(Firebase 연동 필요)</div>';
-return;
-}
-
-listEl.innerHTML = '<div class="text-center text-gray-500">불러오는 중...</div>';
-
-try {
-const scoresRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
-const q = query(scoresRef, orderBy("score", "desc"), limit(5));
-const querySnapshot = await getDocs(q);
-
-allScores = [];
-querySnapshot.forEach((doc) => {
-allScores.push(doc.data());
-});
-renderLeaderboard();
-} catch (e) {
-console.warn("Leaderboard unavailable", e);
-listEl.innerHTML = '<div class="text-center text-red-500">리더보드를 불러올 수 없습니다.</div>';
-}
-}
-
-function renderLeaderboard() {
-const el = document.getElementById('leaderboard-list');
-el.innerHTML = '';
-const top5 = allScores.slice(0, 5);
-if(top5.length === 0) el.innerHTML = '<div class="text-center text-gray-500">기록이 없습니다.</div>';
-top5.forEach((s, i) => {
-const row = document.createElement('div');
-row.className = 'flex justify-between items-center border-b border-gray-800 pb-1';
-row.innerHTML = `<span style="color:#0ff; width:20px;">${i+1}</span> <span class="flex-1 truncate px-2 text-white">${s.playerName}</span> <span style="color:#ff0">${s.score}</span>`;
-el.appendChild(row);
-});
-}
-
-async function submitScore() {
-const btn = document.getElementById('submit-score-btn');
-
-// 데이터베이스가 없으면 저장 불가 처리
-if (!db) {
-btn.textContent = '저장 불가 (서버 없음)';
-setTimeout(() => { document.getElementById('name-entry').classList.add('hidden'); }, 1000);
-return;
-}
-
-            if (!currentUser) return;
-            // currentUser가 없으면 인증이 완료될 때까지 대기
-            if (!currentUser) {
-                console.log("Waiting for authentication...");
-                btn.textContent = '인증 중...';
-                btn.disabled = true;
                 
-                // 최대 5초까지 대기
-                let waitCount = 0;
-                const waitAuth = setInterval(() => {
-                    waitCount++;
-                    if (currentUser || waitCount > 50) {
-                        clearInterval(waitAuth);
-                        if (!currentUser) {
-                            btn.textContent = '인증 실패. 다시 시도';
-                            btn.disabled = false;
-                            return;
+                <!-- 불필요한 읽기 방지를 위해 정적 텍스트로 수정 -->
+                <div class="text-yellow-400 text-sm mb-4 h-5">디지털 탐험대 아케이드에 오신 것을 환영합니다!</div>
+                
+                <!-- 게임 설명 박스 -->
+                <div class="mb-6 bg-black/60 p-4 rounded-xl border-2 border-gray-700 text-left text-sm md:text-lg space-y-3 mx-auto w-full max-w-lg font-bold">
+                    <p class="text-white"><span class="text-cyan-400">⌨️ 조종법:</span> 방향키/WASD 이동, SPACE 발사, <span class="text-red-400">숫자 '8' 폭탄</span><br><span class="text-xs text-gray-400 font-normal">(모바일: 터치 드래그 시 자동 발사)</span></p>
+                    <p class="text-white"><span class="text-yellow-400">⭐ 보너스 퀴즈:</span> 물음표 별을 맞추면 <span class="text-green-400">무기 강력 업그레이드!</span></p>
+                    <p class="text-white"><span class="text-pink-400">🎁 특별 보급품:</span> 적 30기마다 아이템 등장!<br><span class="text-xs text-gray-300 font-normal">👉 🛡️보호막 / 🚁보조 도우미 / 💣화면 파괴 폭탄</span></p>
+                    <p class="text-white"><span class="text-red-500">👾 보스 전투:</span> 중간 보스를 넘으면 <span class="text-purple-400">극악의 최종 보스</span> 등장!</p>
+                </div>
+
+                <button id="start-btn" class="btn pixel-border">INSERT COIN (게임 시작)</button>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen hidden" style="background:rgba(0,0,50,0.95)">
+            <div class="pixel-border p-8 max-w-2xl w-11/12 pop-in" style="background:#111">
+                <h2 class="text-center text-3xl font-bold mb-4 blink star-text" style="color:#f00">SYSTEM HACKED!</h2>
+                <p class="text-gray-400 text-base text-center mb-6">문제를 맞혀 시스템을 복구하세요</p>
+                <p id="quiz-question" class="text-white text-2xl md:text-3xl mb-8 leading-relaxed font-bold break-keep"></p>
+                <div id="quiz-options" class="space-y-3"></div>
+                <div id="quiz-result" class="text-center mt-6 text-2xl font-bold hidden drop-shadow-md"></div>
+            </div>
+        </div>
+
+        <!-- Game Over / Game Win Screen -->
+        <div id="gameover-screen" class="screen hidden" style="background:rgba(0,0,0,0.9)">
+            <canvas id="fireworksCanvas" class="absolute inset-0 z-0 pointer-events-none hidden"></canvas>
+
+            <div class="text-center px-4 w-full max-w-sm relative z-10">
+                <h1 id="gameover-title-text" class="text-4xl font-bold mb-6 leading-tight">GAME OVER</h1>
+                
+                <p class="text-2xl font-bold mb-6" style="color:#ff0" id="final-score"></p>
+                
+                <div id="name-entry" class="mb-4">
+                    <label for="player-name" class="text-gray-300 text-sm block mb-2">랭킹 등록 (한글/영문/숫자 1~8자)</label>
+                    <input id="player-name" type="text" maxlength="8" placeholder="이름 입력" class="bg-black border-2 border-gray-600 text-white px-3 py-2 text-center font-mono w-48 focus:border-cyan-400 outline-none mb-1">
+                    <div id="name-error" class="text-red-500 text-xs mb-2 hidden">이름 형식이 올바르지 않습니다.</div>
+                    <br>
+                    <button id="submit-score-btn" class="btn" style="background:#ff0; color:#000; padding: 8px 24px; font-size: 14px;">점수 저장</button>
+                </div>
+                
+                <button id="restart-btn" class="btn pixel-border mt-2 w-48">다시 하기</button>
+                
+                <div id="leaderboard" class="mt-8 text-left mx-auto bg-black/50 p-4 border border-gray-800 rounded z-20 relative">
+                    <h3 class="text-center text-sm font-bold mb-3" style="color:#0ff">🏆 TOP 5 랭킹 🏆</h3>
+                    <div id="leaderboard-list" class="text-gray-300 text-sm space-y-2">
+                        <div class="text-center text-gray-500">불러오는 중...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase & Game Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ============================================================================
+        // 🔴 [중요] 깃허브 배포 시 아래 myFirebaseConfig 안에 본인의 Firebase 설정값을 채워주세요.
+        // ============================================================================
+        const myFirebaseConfig = {
+            apiKey: "AIzaSyBt1EDNuvgBU_a5zvTeBo82M-pCqFiMhRs",
+            authDomain: "browser-771c8.firebaseapp.com",
+            projectId: "browser-771c8",
+            storageBucket: "browser-771c8.firebasestorage.app",
+            messagingSenderId: "1041278689682",
+            appId: "1:1041278689682:web:b8d4273a7a62e21982614b"
+        };
+        // ============================================================================
+
+        let auth = null;
+        let db = null;
+        let currentUser = null;
+        let allScores = [];
+        
+        // 캔버스 환경에서는 내장된 __app_id를, 외부에서는 임의의 고유 ID를 사용합니다.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'digital-explorer-arcade';
+
+        try {
+            // 캔버스 내부 환경변수 확인
+            let configStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+            let activeConfig = myFirebaseConfig;
+            
+            if (configStr && configStr.length > 0) {
+                try {
+                    activeConfig = JSON.parse(configStr);
+                } catch(e) { console.warn("Invalid internal config", e); }
+            }
+            
+            // 설정값이 비어있지 않은 경우에만 Firebase 초기화 진행
+            if (activeConfig && Object.keys(activeConfig).length > 0 && activeConfig.apiKey !== "") {
+                const app = initializeApp(activeConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            // 깃허브에서는 익명 로그인으로 동작합니다.
+                            await signInAnonymously(auth);
                         }
-                        submitScore(); // 재귀 호출
-                    }
-                }, 100);
+                    } catch(e) { console.warn("Auth init failed", e); }
+                };
+                initAuth();
+
+                onAuthStateChanged(auth, (user) => {
+                    currentUser = user;
+                });
+            } else {
+                console.warn("데이터베이스 설정이 없어 랭킹 기능이 비활성화된 채로 게임이 시작됩니다.");
+            }
+        } catch (error) {
+            console.error("Firebase 초기화 에러:", error);
+        }
+
+        // 수동으로 리더보드를 불러오는 함수
+        async function fetchLeaderboard() {
+            const listEl = document.getElementById('leaderboard-list');
+            
+            // 데이터베이스(db)가 없으면 안내 문구 띄우고 종료
+            if (!db) {
+                listEl.innerHTML = '<div class="text-center text-gray-500 text-xs">서버 설정이 없어 랭킹이 표시되지 않습니다.<br>(Firebase 연동 필요)</div>';
                 return;
             }
 
-const nameInput = document.getElementById('player-name');
-const name = nameInput.value.trim();
-const errorEl = document.getElementById('name-error');
+            listEl.innerHTML = '<div class="text-center text-gray-500">불러오는 중...</div>';
 
-// 이름 필터링 (한글/영문/숫자 1~8자)
-const nameRegex = /^[가-힣a-zA-Z0-9]{1,8}$/;
-if (!nameRegex.test(name)) {
-errorEl.classList.remove('hidden');
-return;
-} else {
-errorEl.classList.add('hidden');
-}
+            try {
+                const scoresRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+                const q = query(scoresRef, orderBy("score", "desc"), limit(5));
+                const querySnapshot = await getDocs(q);
+                
+                allScores = [];
+                querySnapshot.forEach((doc) => {
+                    allScores.push(doc.data());
+                });
+                renderLeaderboard();
+            } catch (e) {
+                console.warn("Leaderboard unavailable", e);
+                listEl.innerHTML = '<div class="text-center text-red-500">리더보드를 불러올 수 없습니다.</div>';
+            }
+        }
 
-btn.disabled = true; 
-btn.textContent = '저장 중...';
+        function renderLeaderboard() {
+            const el = document.getElementById('leaderboard-list');
+            el.innerHTML = '';
+            const top5 = allScores.slice(0, 5);
+            if(top5.length === 0) el.innerHTML = '<div class="text-center text-gray-500">기록이 없습니다.</div>';
+            top5.forEach((s, i) => {
+                const row = document.createElement('div');
+                row.className = 'flex justify-between items-center border-b border-gray-800 pb-1';
+                row.innerHTML = `<span style="color:#0ff; width:20px;">${i+1}</span> <span class="flex-1 truncate px-2 text-white">${s.playerName}</span> <span style="color:#ff0">${s.score}</span>`;
+                el.appendChild(row);
+            });
+        }
 
-try {
-const scoresRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
-await addDoc(scoresRef, {
-playerName: name,
-score: score,
-timestamp: Date.now()
-});
-                btn.textContent = '저장 완료!';
-document.getElementById('name-entry').classList.add('hidden');
-await fetchLeaderboard();
-} catch (e) {
-console.warn("Score save failed", e);
-btn.disabled = false;
-btn.textContent = '저장 실패. 다시 시도';
-}
-}
-document.getElementById('submit-score-btn').addEventListener('click', submitScore);
+        async function submitScore() {
+            const btn = document.getElementById('submit-score-btn');
+            
+            // 데이터베이스가 없으면 저장 불가 처리
+            if (!db) {
+                btn.textContent = '저장 불가 (서버 없음)';
+                setTimeout(() => { document.getElementById('name-entry').classList.add('hidden'); }, 1000);
+                return;
+            }
 
-// --- 퀴즈 DB ---
-const quizDB = [
-{ q: "인터넷 세상 속에서 여러 사이트를 찾아갈 수 있게 도와주는 프로그램은?", correct: "웹 브라우저", wrong: ["브로콜리", "블루투스"] },
-{ q: "구글에서 만들었으며, 오른쪽 위에 '세로로 된 점 3개'가 특징인 브라우저는?", correct: "크롬", wrong: ["엣지", "웨일"] },
-{ q: "마이크로소프트에서 만들었으며, '가로로 된 점 3개' 메뉴가 특징인 브라우저는?", correct: "엣지", wrong: ["사파리", "웨일"] },
-{ q: "내가 가고 싶은 사이트의 인터넷 주소(URL)를 적는 곳은?", correct: "주소창", wrong: ["검색창", "상태창"] },
-{ q: "더 이상 살아 있는 개체가 없어서 지구상에서 완전히 사라지는 것을 뜻하는 단어는?", correct: "멸종", wrong: ["진화", "보호"] },
-{ q: "인터넷의 자료를 검색할 수 있는 사이트가 아닌 것은?", correct: "기상청", wrong: ["네이버", "구글"] },
-{ q: "네이버에서 만든 브라우저는?", correct: "웨일", wrong: ["사파리", "엣지"] },
-{ q: "인터넷에서 사이트를 찾아가기 위한 주소를 무엇이라고 하나요?", correct: "url", wrong: ["http", "html"] },
+            if (!currentUser) return;
+            const nameInput = document.getElementById('player-name');
+            const name = nameInput.value.trim();
+            const errorEl = document.getElementById('name-error');
+            
+            // 이름 필터링 (한글/영문/숫자 1~8자)
+            const nameRegex = /^[가-힣a-zA-Z0-9]{1,8}$/;
+            if (!nameRegex.test(name)) {
+                errorEl.classList.remove('hidden');
+                return;
+            } else {
+                errorEl.classList.add('hidden');
+            }
+
+            btn.disabled = true; 
+            btn.textContent = '저장 중...';
+            
+            try {
+                const scoresRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+                await addDoc(scoresRef, {
+                    playerName: name,
+                    score: score,
+                    timestamp: Date.now()
+                });
+                document.getElementById('name-entry').classList.add('hidden');
+                await fetchLeaderboard();
+            } catch (e) {
+                console.warn("Score save failed", e);
+                btn.disabled = false;
+                btn.textContent = '저장 실패. 다시 시도';
+            }
+        }
+        document.getElementById('submit-score-btn').addEventListener('click', submitScore);
+
+        // --- 퀴즈 DB ---
+        const quizDB = [
+            { q: "인터넷 세상 속에서 여러 사이트를 찾아갈 수 있게 도와주는 프로그램은?", correct: "웹 브라우저", wrong: ["브로콜리", "블루투스"] },
+            { q: "구글에서 만들었으며, 오른쪽 위에 '세로로 된 점 3개'가 특징인 브라우저는?", correct: "크롬", wrong: ["엣지", "웨일"] },
+            { q: "마이크로소프트에서 만들었으며, '가로로 된 점 3개' 메뉴가 특징인 브라우저는?", correct: "엣지", wrong: ["사파리", "웨일"] },
+            { q: "내가 가고 싶은 사이트의 인터넷 주소(URL)를 적는 곳은?", correct: "주소창", wrong: ["검색창", "상태창"] },
+            { q: "더 이상 살아 있는 개체가 없어서 지구상에서 완전히 사라지는 것을 뜻하는 단어는?", correct: "멸종", wrong: ["진화", "보호"] },
+            { q: "인터넷의 자료를 검색할 수 있는 사이트가 아닌 것은?", correct: "기상청", wrong: ["네이버", "구글"] },
+            { q: "네이버에서 만든 브라우저는?", correct: "웨일", wrong: ["사파리", "엣지"] },
+            { q: "인터넷에서 사이트를 찾아가기 위한 주소를 무엇이라고 하나요?", correct: "url", wrong: ["http", "html"] },
             { q: "검색 사이트에서 정보를 검색할 때 어디에 찾을 정보를 적고 검색하면 되나요?", correct: "검색창", wrong: ["팝업창", "메모장"] },
-            { q: "검색 사이트에서 정보를 검색할 때 어디에 �을 정보를 적고 검색하면 되나요?", correct: "검색창", wrong: ["팝업창", "메모장"] },
-{ q: "브라우저 중에 고래 모양의 아이콘을 가지고 있는 브라우저는 무엇인가요?", correct: "웨일", wrong: ["엣지", "사파리"] },
-{ q: "애플사의 브라우저로 아이폰, 맥 컴퓨터에서 사용하는 브라우저는 무엇인가요?", correct: "사파리", wrong: ["크롬", "웨일"] }            
-];
-
-// --- 게임 엔진 ---
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const container = document.getElementById('game-container');
-const flashOverlay = document.getElementById('flash-overlay');
-
-let W, H, score, lives, player, enemies, playerBullets, enemyBullets, particles, floatingTexts;
-let gameRunning = false, gamePaused = false, spawnTimer = 0, difficulty = 0, frameCount = 0;
-let keys = {}, isDragging = false, targetX = null, targetY = null;
-let usedQuizIndices = [], enemiesDestroyedCount = 0, currentLevel = 1, bossActive = false, playerWeaponLevel = 1, boss = null;
-let currentQuizType = 'revive';
-let enemiesSpawnedCount = 0;
-let reviveCount = 0;
-let keyBuffer = '';
-let fwAnimationId = null;
-let fwParticles = [];
-let isWinning = false;
-let gameLoopAnimId = null;
-
-function resize() { 
-// Fallback for innerWidth/innerHeight being 0 in some iframe states
-W = canvas.width = window.innerWidth || 800; 
-H = canvas.height = window.innerHeight || 600; 
-if(player && !gameRunning) { player.x = W/2; player.y = H-80; }
-}
-window.addEventListener('resize', resize); 
-resize();
-
-// 배경 파티클
-const stars = Array.from({length: 80}, () => ({ x: Math.random()*2000, y: Math.random()*2000, s: Math.random()*2.5+0.3, sp: Math.random()*2+0.3, hue: Math.random()*60+180 }));
-const nebulae = Array.from({length: 3}, () => ({ x: Math.random()*2000, y: Math.random()*2000, r: Math.random()*200+100, hue: Math.random()*360, sp: Math.random()*0.3+0.1 }));
-
-function drawBackground() {
-let safeW = W || 1; 
-nebulae.forEach(n => {
-n.y += n.sp;
-if (n.y > H + n.r) { n.y = -n.r; n.x = Math.random() * safeW; }
-const nx = n.x % safeW;
-const g = ctx.createRadialGradient(nx, n.y, 0, nx, n.y, Math.max(0.1, n.r));
-g.addColorStop(0, `hsla(${n.hue},80%,40%,0.08)`);
-g.addColorStop(1, 'transparent');
-ctx.fillStyle = g;
-ctx.fillRect(nx - n.r, n.y - n.r, n.r*2, n.r*2);
-});
-stars.forEach(s => {
-s.y += s.sp;
-if (s.y > H) { s.y = 0; s.x = Math.random() * safeW; }
-ctx.fillStyle = `hsla(${s.hue},60%,85%,${0.4+Math.sin(frameCount*0.05+s.x)*0.3})`;
-ctx.fillRect(s.x % safeW, s.y, s.s, s.s);
-});
-}
-
-function drawShip(x, y) {
-ctx.save();
-if (player && player.invincible > 0 && frameCount % 10 < 5 && !player.hasCheatShield) {
-ctx.globalAlpha = 0.4;
-}
-
-if (player && player.hasCheatShield) {
-ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
-ctx.lineWidth = 3;
-ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 15;
-ctx.beginPath(); ctx.arc(x, y, 28 + Math.sin(frameCount*0.2)*2, 0, Math.PI * 2); ctx.stroke();
-ctx.fillStyle = 'rgba(0, 255, 255, 0.2)'; ctx.fill();
-}
-
-if (player && player.shieldHits > 0) {
-ctx.shadowBlur = 0;
-for (let i = 0; i < player.shieldHits; i++) {
-ctx.beginPath();
-ctx.arc(x, y, 22 + i * 4, 0, Math.PI * 2);
-ctx.strokeStyle = `rgba(0, 255, 100, ${0.4 + i * 0.2})`;
-ctx.lineWidth = 2;
-ctx.stroke();
-}
-}
-
-ctx.shadowColor = 'rgba(0,0,0,0.4)';
-ctx.shadowBlur = 6;
-ctx.shadowOffsetY = 4;
-
-ctx.fillStyle = '#ffaa00';
-const flameH = 10 + Math.sin(frameCount * 0.5) * 5;
-ctx.beginPath(); ctx.arc(x, y + 10, 8, 0, Math.PI); ctx.lineTo(x, y + 10 + flameH); ctx.fill();
-
-ctx.fillStyle = '#ffffff';
-ctx.beginPath(); ctx.ellipse(x, y, 14, 18, 0, 0, Math.PI*2); ctx.fill();
-
-ctx.fillStyle = '#00ddff';
-ctx.beginPath(); ctx.arc(x, y - 4, 8, 0, Math.PI*2); ctx.fill();
-ctx.fillStyle = '#ffffff'; 
-ctx.beginPath(); ctx.arc(x - 3, y - 6, 2.5, 0, Math.PI*2); ctx.fill();
-
-ctx.fillStyle = '#ff66aa';
-ctx.beginPath(); ctx.ellipse(x - 14, y + 5, 8, 12, -Math.PI/4, 0, Math.PI*2); ctx.fill();
-ctx.beginPath(); ctx.ellipse(x + 14, y + 5, 8, 12, Math.PI/4, 0, Math.PI*2); ctx.fill();
-
-if (player && player.droneCount > 0) {
-for (let i = 0; i < player.droneCount; i++) {
-let angleOffset = (Math.PI * 2 / player.droneCount) * i + (frameCount * 0.05);
-let dX = x + Math.cos(angleOffset) * 40;
-let dY = y + Math.sin(angleOffset) * 40;
-
-ctx.fillStyle = '#0f0';
-ctx.beginPath(); ctx.arc(dX, dY, 6, 0, Math.PI*2); ctx.fill();
-ctx.fillStyle = '#fff';
-ctx.beginPath(); ctx.arc(dX, dY-2, 2, 0, Math.PI*2); ctx.fill();
-
-ctx.fillStyle = '#080';
-ctx.beginPath(); ctx.ellipse(dX - 6, dY + 2, 3, 5, -Math.PI/4, 0, Math.PI*2); ctx.fill();
-ctx.beginPath(); ctx.ellipse(dX + 6, dY + 2, 3, 5, Math.PI/4, 0, Math.PI*2); ctx.fill();
-}
-}
-
-ctx.restore();
-}
-
-function drawEnemy(e) {
-ctx.save();
-ctx.shadowColor = 'rgba(0,0,0,0.3)';
-ctx.shadowBlur = 5;
-ctx.shadowOffsetY = 3;
-
-if (e.isItem) {
-ctx.fillStyle = '#222';
-ctx.strokeStyle = e.itemType === 0 ? '#0ff' : (e.itemType === 1 ? '#0f0' : '#f00');
-ctx.lineWidth = 2;
-ctx.shadowColor = ctx.strokeStyle;
-ctx.shadowBlur = 10;
-
-ctx.beginPath();
-ctx.arc(e.x, e.y, 16, 0, Math.PI*2);
-ctx.fill();
-ctx.stroke();
-
-ctx.shadowBlur = 0;
-ctx.font = '16px "Jua"';
-ctx.textAlign = 'center';
-ctx.textBaseline = 'middle';
-
-let icon = '';
-if (e.itemType === 0) icon = '🛡️';
-else if (e.itemType === 1) icon = '🚁';
-else icon = '💣';
-
-ctx.fillText(icon, e.x, e.y + 1); 
-ctx.restore();
-return;
-}
-
-if (e.isBonus) {
-ctx.fillStyle = '#ffff00';
-ctx.shadowColor = '#ffcc00';
-ctx.shadowBlur = 15;
-ctx.beginPath();
-for (let i = 0; i < 5; i++) {
-ctx.lineTo(Math.cos( (18 + i * 72) / 180 * Math.PI ) * 16 + e.x,
--Math.sin( (18 + i * 72) / 180 * Math.PI ) * 16 + e.y);
-ctx.lineTo(Math.cos( (54 + i * 72) / 180 * Math.PI ) * 8 + e.x,
--Math.sin( (54 + i * 72) / 180 * Math.PI ) * 8 + e.y);
-}
-ctx.closePath();
-ctx.fill();
-
-ctx.fillStyle = '#000';
-ctx.shadowBlur = 0;
-ctx.font = 'bold 16px "Space Mono"';
-ctx.textAlign = 'center';
-ctx.textBaseline = 'middle';
-ctx.fillText('?', e.x, e.y + 1);
-
-ctx.restore();
-return;
-}
-
-ctx.fillStyle = e.color || '#aa00ff';
-for (let i = 0; i < 6; i++) {
-const angle = (Math.PI*2/6) * i + frameCount * 0.05;
-ctx.beginPath();
-ctx.arc(e.x + Math.cos(angle)*12, e.y + Math.sin(angle)*12, 5, 0, Math.PI*2);
-ctx.fill();
-}
-
-ctx.beginPath(); ctx.arc(e.x, e.y, 14, 0, Math.PI*2); ctx.fill();
-
-ctx.fillStyle = '#ffffff';
-ctx.beginPath(); ctx.ellipse(e.x - 5, e.y - 3, 4, 5, -0.2, 0, Math.PI*2); ctx.fill();
-ctx.beginPath(); ctx.ellipse(e.x + 5, e.y - 3, 4, 5, 0.2, 0, Math.PI*2); ctx.fill();
-ctx.fillStyle = '#000000';
-ctx.beginPath(); ctx.arc(e.x - 5, e.y - 3, 2, 0, Math.PI*2); ctx.fill();
-ctx.beginPath(); ctx.arc(e.x + 5, e.y - 3, 2, 0, Math.PI*2); ctx.fill();
-
-ctx.strokeStyle = '#000000'; ctx.lineWidth = 2;
-ctx.beginPath(); ctx.moveTo(e.x - 9, e.y - 8); ctx.lineTo(e.x - 3, e.y - 5); ctx.stroke();
-ctx.beginPath(); ctx.moveTo(e.x + 9, e.y - 8); ctx.lineTo(e.x + 3, e.y - 5); ctx.stroke();
-
-ctx.restore();
-}
-
-function drawBoss() {
-if (!boss) return;
-const b = boss;
-ctx.save();
-ctx.shadowColor = 'rgba(0,0,0,0.5)';
-ctx.shadowBlur = 10;
-ctx.shadowOffsetY = 5;
-
-if (b.type === 0) {
-ctx.fillStyle = '#8800cc';
-for(let i = 0; i < 8; i++) {
-const angle = (Math.PI*2/8) * i - frameCount * 0.02;
-ctx.beginPath(); ctx.arc(b.x + Math.cos(angle)*35, b.y + Math.sin(angle)*35, 12, 0, Math.PI*2); ctx.fill();
-}
-ctx.fillStyle = '#aa00ff';
-ctx.beginPath(); ctx.arc(b.x, b.y, 35, 0, Math.PI*2); ctx.fill();
-ctx.fillStyle = '#ffcc00';
-ctx.beginPath(); ctx.moveTo(b.x - 20, b.y - 25); ctx.lineTo(b.x - 25, b.y - 50); ctx.lineTo(b.x - 10, b.y - 35); ctx.lineTo(b.x, b.y - 55); ctx.lineTo(b.x + 10, b.y - 35); ctx.lineTo(b.x + 25, b.y - 50); ctx.lineTo(b.x + 20, b.y - 25); ctx.fill();
-ctx.fillStyle = '#ffffff';
-ctx.beginPath(); ctx.arc(b.x - 15, b.y - 5, 10, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(b.x + 15, b.y - 5, 10, 0, Math.PI*2); ctx.fill();
-ctx.fillStyle = '#ff0000'; 
-ctx.beginPath(); ctx.arc(b.x - 12, b.y - 5, 5, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(b.x + 12, b.y - 5, 5, 0, Math.PI*2); ctx.fill();
-ctx.fillStyle = '#ffffff';
-ctx.beginPath(); ctx.moveTo(b.x - 10, b.y + 15); ctx.lineTo(b.x - 5, b.y + 25); ctx.lineTo(b.x, b.y + 15); ctx.fill(); ctx.beginPath(); ctx.moveTo(b.x + 10, b.y + 15); ctx.lineTo(b.x + 5, b.y + 25); ctx.lineTo(b.x, b.y + 15); ctx.fill();
-} else if (b.type === 1) {
-ctx.fillStyle = '#ff6600';
-ctx.beginPath(); ctx.moveTo(b.x, b.y - 40); ctx.lineTo(b.x - 55, b.y + 10); ctx.lineTo(b.x, b.y + 50); ctx.lineTo(b.x + 55, b.y + 10); ctx.fill();
-ctx.fillStyle = '#ffcc00'; ctx.beginPath(); ctx.arc(b.x, b.y + 5, 18, 0, Math.PI*2); ctx.fill();
-ctx.fillStyle = '#ff0000'; ctx.beginPath(); ctx.arc(b.x, b.y + 5, 8, 0, Math.PI*2); ctx.fill();
-ctx.strokeStyle = '#ff9900'; ctx.lineWidth = 4;
-ctx.beginPath(); ctx.moveTo(b.x - 20, b.y - 10); ctx.lineTo(b.x - 45, b.y - 20); ctx.stroke(); ctx.beginPath(); ctx.moveTo(b.x + 20, b.y - 10); ctx.lineTo(b.x + 45, b.y - 20); ctx.stroke();
-} else if (b.type === 2) {
-ctx.fillStyle = '#cc0000';
-ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(b.x - 70, b.y - 20, 140, 40, 15); else ctx.rect(b.x - 70, b.y - 20, 140, 40); ctx.fill();
-ctx.fillStyle = '#ff3333'; ctx.beginPath(); ctx.arc(b.x, b.y - 20, 30, Math.PI, 0); ctx.fill();
-ctx.fillStyle = '#00ffff'; ctx.beginPath(); ctx.ellipse(b.x, b.y, 25, 10, 0, 0, Math.PI*2); ctx.fill();
-ctx.fillStyle = '#555'; ctx.fillRect(b.x - 65, b.y + 20, 15, 20); ctx.fillRect(b.x + 50, b.y + 20, 15, 20);
-} else if (b.type === 3) {
-ctx.fillStyle = '#111';
-ctx.beginPath(); ctx.arc(b.x, b.y, 45, 0, Math.PI*2); ctx.fill();
-ctx.strokeStyle = '#f00'; ctx.lineWidth = 5;
-for(let i=0; i<12; i++){
-let angle = (Math.PI*2/12)*i + frameCount*0.05;
-ctx.beginPath(); ctx.moveTo(b.x + Math.cos(angle)*45, b.y + Math.sin(angle)*45); ctx.lineTo(b.x + Math.cos(angle)*65, b.y + Math.sin(angle)*65); ctx.stroke();
-}
-ctx.fillStyle = '#ff0000'; ctx.shadowColor = '#f00'; ctx.shadowBlur = 20;
-ctx.beginPath(); ctx.arc(b.x, b.y, 20 + Math.sin(frameCount*0.2)*5, 0, Math.PI*2); ctx.fill();
-ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(b.x, b.y, 8, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
-}
-
-ctx.restore();
-
-const hpPct = Math.max(0, b.hp / b.maxHp);
-ctx.fillStyle = '#222'; ctx.fillRect(b.x-40, b.y-60, 80, 8);
-ctx.fillStyle = hpPct > 0.3 ? '#0f0' : '#f00'; ctx.fillRect(b.x-40, b.y-60, 80*hpPct, 8);
-}
-
-function spawnEnemy() {
-enemiesSpawnedCount++;
-
-if (enemiesSpawnedCount % 30 === 0 && !(bossActive && currentLevel >= 4)) {
-enemies.push({ 
-x: Math.random()*(W-40)+20, y: -20, 
-speed: 2, shootTimer: 999, 
-isItem: true, 
-itemType: Math.floor(Math.random() * 3), 
-hp: 1 
-});
-return;
-}
-
-if (enemiesSpawnedCount % 10 === 0 && !(bossActive && currentLevel >= 4)) {
-enemies.push({ 
-x: Math.random()*(W-40)+20, y: -20, 
-speed: 2.5 + difficulty*0.5, shootTimer: 999, 
-color: '#ffff00', hp: 1, isBonus: true 
-});
-return;
-}
-
-const colors = ['#ff00ff','#ff8800','#ff4444','#88ff00','#00ccff'];
-enemies.push({ 
-x: Math.random()*(W-40)+20, y: -20, 
-speed: 1.5 + difficulty*0.5 + Math.random(), 
-shootTimer: Math.random()*60+30, 
-color: colors[Math.floor(Math.random()*colors.length)], 
-hp: 1, type: Math.floor(Math.random()*4) 
-});
-}
-
-function addParticles(x, y, color, count) {
-for (let i = 0; i < count; i++) {
-particles.push({ x, y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 25+Math.random()*20, color, size: Math.random()*4+1 });
-}
-if (particles.length > 300) {
-particles.splice(0, particles.length - 300);
-}
-}
-
-function showFloatingText(x, y, text, color="#fff") {
-floatingTexts.push({ x: x, y: y, text: text, color: color, life: 60 });
-}
-
-function drawFloatingTexts() {
-floatingTexts = floatingTexts.filter(ft => {
-ft.y -= 1;
-ft.life--;
-ctx.save();
-ctx.globalAlpha = ft.life / 60;
-ctx.fillStyle = ft.color;
-ctx.font = '20px "Jua"';
-ctx.textAlign = 'center';
-ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
-ctx.fillText(ft.text, ft.x, ft.y);
-ctx.restore();
-return ft.life > 0;
-});
-}
-
-function showScreen(id) {
-['title-screen','quiz-screen','gameover-screen'].forEach(s => document.getElementById(s).classList.toggle('hidden', s !== id));
-}
-
-function updateHUD() {
-document.getElementById('score-display').textContent = score;
-document.getElementById('bomb-display').textContent = player ? player.bombs : 0;
-document.getElementById('lives-display').innerHTML = Array(lives).fill('<span style="color:#0f0">♥</span>').join('') + Array(3-lives).fill('<span style="color:#555">♥</span>').join('');
-document.getElementById('revive-display').textContent = 3 - reviveCount;
-}
-
-function triggerBomb() {
-if (!gameRunning || gamePaused || !player || player.bombs <= 0) return;
-
-player.bombs--;
-updateHUD();
-
-flashOverlay.classList.remove('flash-anim');
-void flashOverlay.offsetWidth; 
-flashOverlay.classList.add('flash-anim');
-
-enemyBullets = [];
-
-enemies = enemies.filter(e => {
-if (e.isItem || e.isBonus) return true; 
-addParticles(e.x, e.y, e.color || '#fff', 15);
-score += 50;
-return false;
-});
-
-if (boss) {
-boss.hp -= 150;
-addParticles(boss.x, boss.y, '#ff0000', 40);
-showFloatingText(boss.x, boss.y, "BOMB DAMAGE!", "#ff0");
-}
-updateHUD();
-}
-
-function collectItem(x, y, type) {
-if (type === 0) {
-addParticles(x, y, '#00ffff', 30);
-player.shieldHits = 3;
-showFloatingText(x, y, "🛡️ 보호막 3회 획득!", "#0ff");
-} else if (type === 1) {
-addParticles(x, y, '#00ff00', 30);
-player.droneCount = Math.min((player.droneCount || 0) + 1, 4); 
-showFloatingText(x, y, "🚁 보조 도우미 추가!", "#0f0");
-} else {
-addParticles(x, y, '#ff0000', 30);
-player.bombs++;
-updateHUD();
-showFloatingText(x, y, "💣 폭탄 획득! (8번 키)", "#ff4444");
-}
-}
-
-function takeDamage() {
-if (player.hasCheatShield) return;
-
-if (player.shieldHits > 0) {
-player.shieldHits--;
-player.invincible = 40; 
-addParticles(player.x, player.y, '#00ffaa', 15);
-showFloatingText(player.x, player.y, "방어!", "#0f0");
-return;
-}
-
-lives--; 
-playerWeaponLevel = 1; 
-player.droneCount = 0; 
-player.bombs = 0;
-
-addParticles(player.x, player.y, '#f80', 20); 
-updateHUD(); 
-
-if (lives > 0) {
-player.invincible = 90;
-} else {
-if (reviveCount < 3) triggerQuiz('revive');
-else gameOver();
-}
-}
-
-// --- 입력 처리 ---
-document.addEventListener('keydown', e => { 
-keys[e.key] = true; keys[e.code] = true; 
-
-if (e.key === '8' || e.code === 'Numpad8') {
-triggerBomb();
-}
-
-keyBuffer += e.key;
-if (keyBuffer.length > 4) keyBuffer = keyBuffer.slice(-4);
-if (keyBuffer === '7942') {
-if (player && !player.hasCheatShield) {
-player.hasCheatShield = true;
-addParticles(player.x, player.y, '#00ffff', 50);
-showFloatingText(player.x, player.y, "CHEAT: 무적 방어막", "#0ff");
-}
-keyBuffer = ''; 
-}
-});
-document.addEventListener('keyup', e => { keys[e.key] = false; keys[e.code] = false; });
-
-function handleMoveEvent(e) {
-e.preventDefault();
-if(!gameRunning || gamePaused) return;
-isDragging = true;
-const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-targetX = clientX;
-targetY = clientY;
-}
-canvas.addEventListener('mousedown', handleMoveEvent);
-canvas.addEventListener('mousemove', (e) => { if(isDragging) handleMoveEvent(e); });
-window.addEventListener('mouseup', () => { isDragging = false; targetX = null; targetY = null; });
-
-canvas.addEventListener('touchstart', handleMoveEvent, {passive:false});
-canvas.addEventListener('touchmove', handleMoveEvent, {passive:false});
-canvas.addEventListener('touchend', () => { isDragging = false; targetX = null; targetY = null; });
-
-function isLeft() { return keys['ArrowLeft']||keys['a']||keys['A']||keys['ㅁ']; }
-function isRight() { return keys['ArrowRight']||keys['d']||keys['D']||keys['ㅇ']; }
-function isUp() { return keys['ArrowUp']||keys['w']||keys['W']||keys['ㅈ']; }
-function isDown() { return keys['ArrowDown']||keys['s']||keys['S']||keys['ㄴ']; }
-function isFire() { return keys[' '] || isDragging; } 
-
-// --- 퀴즈 로직 ---
-function triggerQuiz(type = 'revive') {
-currentQuizType = type;
-gamePaused = true;
-container.classList.add('shake');
-setTimeout(() => container.classList.remove('shake'), 400);
-
-if (usedQuizIndices.length >= quizDB.length) usedQuizIndices = [];
-let idx; do { idx = Math.floor(Math.random()*quizDB.length); } while (usedQuizIndices.includes(idx));
-usedQuizIndices.push(idx);
-
-const quiz = quizDB[idx];
-document.getElementById('quiz-question').textContent = quiz.q;
-
-const optDiv = document.getElementById('quiz-options');
-optDiv.innerHTML = '';
-document.getElementById('quiz-result').classList.add('hidden');
-
-const quizTitle = document.querySelector('#quiz-screen h2');
-if (type === 'upgrade') {
-quizTitle.textContent = "BONUS QUIZ!";
-quizTitle.style.color = "#0ff";
-} else {
-quizTitle.textContent = "SYSTEM HACKED!";
-quizTitle.style.color = "#f00";
-}
-
-const options = [quiz.correct, ...quiz.wrong].sort(() => Math.random()-0.5);
-options.forEach(opt => {
-const btn = document.createElement('button');
-btn.className = 'quiz-option';
-btn.textContent = opt;
-btn.onclick = () => answerQuiz(opt === quiz.correct, quiz.correct);
-optDiv.appendChild(btn);
-});
-showScreen('quiz-screen');
-}
-
-function answerQuiz(correct, correctAnswer) {
-const resEl = document.getElementById('quiz-result');
-resEl.classList.remove('hidden');
-document.querySelectorAll('.quiz-option').forEach(b => b.disabled = true);
-
-if (correct) {
-if (currentQuizType === 'upgrade') {
-resEl.textContent = '🎉 정답! 무기 레벨 업! 🎉'; 
-resEl.style.color = '#0ff';
-playerWeaponLevel = Math.min(7, playerWeaponLevel + 1); 
-score += 500;
-updateHUD();
-setTimeout(() => { 
-gamePaused = false; 
-showScreen(null); 
-requestAnimationFrame(gameLoop); 
-}, 1200);
-} else {
-resEl.textContent = '🎉 정답! 시스템 복구! 🎉'; 
-resEl.style.color = '#0f0';
-lives = 1; 
-reviveCount++; 
-updateHUD();
-setTimeout(() => { 
-gamePaused = false; 
-showScreen(null); 
-enemyBullets = []; 
-player.invincible = 120; 
-requestAnimationFrame(gameLoop); 
-}, 1200);
-}
-} else {
-score = Math.max(0, score - 1000);
-updateHUD();
-
-if (currentQuizType === 'upgrade') {
-resEl.textContent = `❌ 오답! 감점 -1000 (정답: ${correctAnswer})`; 
-resEl.style.color = '#fa0';
-setTimeout(() => { 
-gamePaused = false; 
-showScreen(null); 
-requestAnimationFrame(gameLoop); 
-}, 2000);
-} else {
-resEl.textContent = `❌ 오답! 감점 -1000 & 파괴됨! (정답: ${correctAnswer})`; 
-resEl.style.color = '#f00';
-setTimeout(() => gameOver(), 2000);
-}
-}
-}
-
-async function gameWin() {
-gameRunning = false;
-document.getElementById('hud').classList.add('hidden');
-document.getElementById('final-score').textContent = `최종 점수: ${score}`;
-
-const titleEl = document.getElementById('gameover-title-text');
-titleEl.innerHTML = '🎉 MISSION CLEAR 🎉<br>우주 평화 달성!'; 
-titleEl.style.color = '#0f0'; 
-titleEl.style.textShadow = '0 0 20px #0f0';
-
-document.getElementById('fireworksCanvas').classList.remove('hidden');
-startFireworks();
-
-document.getElementById('name-entry').classList.remove('hidden');
-document.getElementById('submit-score-btn').disabled = false;
-document.getElementById('submit-score-btn').textContent = '점수 저장';
-showScreen('gameover-screen');
-await fetchLeaderboard();
-}
-
-async function gameOver() {
-gameRunning = false;
-document.getElementById('hud').classList.add('hidden');
-document.getElementById('final-score').textContent = `최종 점수: ${score}`;
-
-const titleEl = document.getElementById('gameover-title-text');
-titleEl.innerHTML = 'GAME OVER'; 
-titleEl.style.color = '#f00'; 
-titleEl.style.textShadow = '0 0 20px #f00';
-
-document.getElementById('fireworksCanvas').classList.add('hidden');
-stopFireworks();
-
-document.getElementById('name-entry').classList.remove('hidden');
-document.getElementById('submit-score-btn').disabled = false;
-document.getElementById('submit-score-btn').textContent = '점수 저장';
-showScreen('gameover-screen');
-await fetchLeaderboard();
-}
-
-// --- 폭죽 축하 애니메이션 로직 ---
-function startFireworks() {
-const fwCanvas = document.getElementById('fireworksCanvas');
-fwCanvas.width = window.innerWidth;
-fwCanvas.height = window.innerHeight;
-const fCtx = fwCanvas.getContext('2d');
-fwParticles = [];
-
-function fwLoop() {
-fwAnimationId = requestAnimationFrame(fwLoop);
-
-fCtx.globalCompositeOperation = 'destination-out';
-fCtx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-fCtx.fillRect(0, 0, fwCanvas.width, fwCanvas.height);
-fCtx.globalCompositeOperation = 'lighter';
-
-if (Math.random() < 0.08) {
-const cx = Math.random() * fwCanvas.width;
-const cy = Math.random() * (fwCanvas.height * 0.6);
-const hue = Math.random() * 360;
-for (let i = 0; i < 40; i++) {
-const speed = Math.random() * 6 + 2;
-const angle = Math.random() * Math.PI * 2;
-fwParticles.push({
-x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
-life: 1, decay: Math.random() * 0.02 + 0.015, color: `hsl(${hue}, 100%, 60%)`
-});
-}
-}
-
-for(let i = fwParticles.length - 1; i >= 0; i--) {
-let p = fwParticles[i];
-p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.life -= p.decay;
-if (p.life <= 0) { fwParticles.splice(i, 1); } 
-else {
-fCtx.beginPath(); fCtx.arc(p.x, p.y, Math.max(0.5, p.life * 3), 0, Math.PI*2);
-fCtx.fillStyle = p.color; fCtx.fill();
-}
-}
-}
-if(!fwAnimationId) fwLoop();
-}
-
-function stopFireworks() {
-if (fwAnimationId) { cancelAnimationFrame(fwAnimationId); fwAnimationId = null; }
-fwParticles = [];
-}
-
-// --- 메인 루프 ---
-function gameLoop() {
-if (!gameRunning || gamePaused) return;
-frameCount++;
-difficulty = Math.min(score / 5000, 3);
-
-ctx.fillStyle = '#000';
-ctx.fillRect(0, 0, W, H);
-drawBackground();
-
-if(player.invincible > 0) player.invincible--;
-
-const spd = 6;
-if (isLeft()) player.x -= spd;
-if (isRight()) player.x += spd;
-if (isUp()) player.y -= spd;
-if (isDown()) player.y += spd;
-
-if (targetX !== null && targetY !== null) {
-player.x += (targetX - player.x) * 0.15;
-player.y += (targetY - player.y) * 0.15;
-}
-
-player.x = Math.max(20, Math.min(W-20, player.x));
-player.y = Math.max(30, Math.min(H-30, player.y));
-
-if (isFire() && player.shootCooldown <= 0) { 
-firePlayerBullets(); 
-player.shootCooldown = Math.max(5, 12 - playerWeaponLevel); 
-}
-player.shootCooldown--;
-
-drawShip(player.x, player.y);
-
-playerBullets = playerBullets.filter(b => {
-b.y -= b.speed; b.x += b.vx || 0;
-ctx.save(); 
-ctx.fillStyle = b.color || '#00ffff';
-ctx.shadowColor = b.color || '#00ffff'; ctx.shadowBlur = 6;
-ctx.beginPath(); ctx.arc(b.x, b.y, 5, 0, Math.PI*2); ctx.fill();
-ctx.fillStyle = '#ffffff';
-ctx.beginPath(); ctx.arc(b.x-1.5, b.y-1.5, 2, 0, Math.PI*2); ctx.fill();
-ctx.restore();
-return b.y > -20 && b.x > -20 && b.x < W+20;
-});
-
-spawnTimer--;
-if (spawnTimer <= 0 && !isWinning) {
-if (bossActive && !boss) {
-let bossType = (currentLevel - 1) % 3;
-let bMaxHp = 25 * currentLevel;
-if (currentLevel >= 4) { bossType = 3; bMaxHp = 250; }
-boss = { x: W/2, y: 100, speed: 0, shootTimer: 60, hp: bMaxHp, maxHp: bMaxHp, type: bossType }; 
-} else if (!bossActive && enemiesDestroyedCount < 15 * currentLevel) { 
-spawnEnemy(); 
-spawnTimer = Math.max(20, 80 - difficulty*15); 
-} else if (!bossActive && enemiesDestroyedCount >= 15 * currentLevel) { 
-bossActive = true; spawnTimer = 100;
-} else if (boss && boss.type === 3) {
-spawnEnemy();
-spawnTimer = Math.max(30, 80 - difficulty*10); 
-}
-}
-
-if (boss) {
-boss.x = W/2 + Math.sin(frameCount*0.03) * (W/3);
-boss.shootTimer--;
-if (boss.shootTimer <= 0) {
-if (boss.type === 0) {
-const bulletCount = 10 + (currentLevel * 3);
-for (let i = 0; i < bulletCount; i++) {
-const angle = (Math.PI*2/bulletCount)*i + frameCount*0.05;
-enemyBullets.push({ x: boss.x, y: boss.y+20, vx: Math.cos(angle)*(3.5 + currentLevel*0.2), vy: Math.sin(angle)*(3.5 + currentLevel*0.2) });
-}
-} else if (boss.type === 1) {
-const dx = player.x - boss.x, dy = player.y - boss.y, d = Math.sqrt(dx*dx+dy*dy) || 1;
-for (let i = -3; i <= 3; i++) {
-const angle = Math.atan2(dy, dx) + (i * 0.12);
-enemyBullets.push({ x: boss.x, y: boss.y+20, vx: Math.cos(angle)*(4.5 + currentLevel*0.3), vy: Math.sin(angle)*(4.5 + currentLevel*0.3) });
-}
-} else if (boss.type === 2) {
-for (let i = 0; i < 4 + currentLevel; i++) {
-const angle1 = frameCount * 0.15 + (Math.PI/4 * i);
-const angle2 = -frameCount * 0.15 + (Math.PI/4 * i);
-enemyBullets.push({ x: boss.x - 55, y: boss.y + 20, vx: Math.cos(angle1)*4, vy: Math.sin(angle1)*4 });
-enemyBullets.push({ x: boss.x + 55, y: boss.y + 20, vx: Math.cos(angle2)*4, vy: Math.sin(angle2)*4 });
-}
-} else if (boss.type === 3) {
+            { q: "브라우저 중에 고래 모양의 아이콘을 가지고 있는 브라우저는 무엇인가요?", correct: "웨일", wrong: ["엣지", "사파리"] },
+            { q: "애플사의 브라우저로 아이폰, 맥 컴퓨터에서 사용하는 브라우저는 무엇인가요?", correct: "사파리", wrong: ["크롬", "웨일"] }            
+        ];
+
+        // --- 게임 엔진 ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('game-container');
+        const flashOverlay = document.getElementById('flash-overlay');
+        
+        let W, H, score, lives, player, enemies, playerBullets, enemyBullets, particles, floatingTexts;
+        let gameRunning = false, gamePaused = false, spawnTimer = 0, difficulty = 0, frameCount = 0;
+        let keys = {}, isDragging = false, targetX = null, targetY = null;
+        let usedQuizIndices = [], enemiesDestroyedCount = 0, currentLevel = 1, bossActive = false, playerWeaponLevel = 1, boss = null;
+        let currentQuizType = 'revive';
+        let enemiesSpawnedCount = 0;
+        let reviveCount = 0;
+        let keyBuffer = '';
+        let fwAnimationId = null;
+        let fwParticles = [];
+        let isWinning = false;
+        let gameLoopAnimId = null;
+
+        function resize() { 
+            // Fallback for innerWidth/innerHeight being 0 in some iframe states
+            W = canvas.width = window.innerWidth || 800; 
+            H = canvas.height = window.innerHeight || 600; 
+            if(player && !gameRunning) { player.x = W/2; player.y = H-80; }
+        }
+        window.addEventListener('resize', resize); 
+        resize();
+
+        // 배경 파티클
+        const stars = Array.from({length: 80}, () => ({ x: Math.random()*2000, y: Math.random()*2000, s: Math.random()*2.5+0.3, sp: Math.random()*2+0.3, hue: Math.random()*60+180 }));
+        const nebulae = Array.from({length: 3}, () => ({ x: Math.random()*2000, y: Math.random()*2000, r: Math.random()*200+100, hue: Math.random()*360, sp: Math.random()*0.3+0.1 }));
+
+        function drawBackground() {
+            let safeW = W || 1; 
+            nebulae.forEach(n => {
+                n.y += n.sp;
+                if (n.y > H + n.r) { n.y = -n.r; n.x = Math.random() * safeW; }
+                const nx = n.x % safeW;
+                const g = ctx.createRadialGradient(nx, n.y, 0, nx, n.y, Math.max(0.1, n.r));
+                g.addColorStop(0, `hsla(${n.hue},80%,40%,0.08)`);
+                g.addColorStop(1, 'transparent');
+                ctx.fillStyle = g;
+                ctx.fillRect(nx - n.r, n.y - n.r, n.r*2, n.r*2);
+            });
+            stars.forEach(s => {
+                s.y += s.sp;
+                if (s.y > H) { s.y = 0; s.x = Math.random() * safeW; }
+                ctx.fillStyle = `hsla(${s.hue},60%,85%,${0.4+Math.sin(frameCount*0.05+s.x)*0.3})`;
+                ctx.fillRect(s.x % safeW, s.y, s.s, s.s);
+            });
+        }
+
+        function drawShip(x, y) {
+            ctx.save();
+            if (player && player.invincible > 0 && frameCount % 10 < 5 && !player.hasCheatShield) {
+                ctx.globalAlpha = 0.4;
+            }
+            
+            if (player && player.hasCheatShield) {
+                ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+                ctx.lineWidth = 3;
+                ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 15;
+                ctx.beginPath(); ctx.arc(x, y, 28 + Math.sin(frameCount*0.2)*2, 0, Math.PI * 2); ctx.stroke();
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.2)'; ctx.fill();
+            }
+
+            if (player && player.shieldHits > 0) {
+                ctx.shadowBlur = 0;
+                for (let i = 0; i < player.shieldHits; i++) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, 22 + i * 4, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(0, 255, 100, ${0.4 + i * 0.2})`;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+
+            ctx.shadowColor = 'rgba(0,0,0,0.4)';
+            ctx.shadowBlur = 6;
+            ctx.shadowOffsetY = 4;
+
+            ctx.fillStyle = '#ffaa00';
+            const flameH = 10 + Math.sin(frameCount * 0.5) * 5;
+            ctx.beginPath(); ctx.arc(x, y + 10, 8, 0, Math.PI); ctx.lineTo(x, y + 10 + flameH); ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath(); ctx.ellipse(x, y, 14, 18, 0, 0, Math.PI*2); ctx.fill();
+
+            ctx.fillStyle = '#00ddff';
+            ctx.beginPath(); ctx.arc(x, y - 4, 8, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#ffffff'; 
+            ctx.beginPath(); ctx.arc(x - 3, y - 6, 2.5, 0, Math.PI*2); ctx.fill();
+
+            ctx.fillStyle = '#ff66aa';
+            ctx.beginPath(); ctx.ellipse(x - 14, y + 5, 8, 12, -Math.PI/4, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(x + 14, y + 5, 8, 12, Math.PI/4, 0, Math.PI*2); ctx.fill();
+
+            if (player && player.droneCount > 0) {
+                for (let i = 0; i < player.droneCount; i++) {
+                    let angleOffset = (Math.PI * 2 / player.droneCount) * i + (frameCount * 0.05);
+                    let dX = x + Math.cos(angleOffset) * 40;
+                    let dY = y + Math.sin(angleOffset) * 40;
+                    
+                    ctx.fillStyle = '#0f0';
+                    ctx.beginPath(); ctx.arc(dX, dY, 6, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath(); ctx.arc(dX, dY-2, 2, 0, Math.PI*2); ctx.fill();
+                    
+                    ctx.fillStyle = '#080';
+                    ctx.beginPath(); ctx.ellipse(dX - 6, dY + 2, 3, 5, -Math.PI/4, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.ellipse(dX + 6, dY + 2, 3, 5, Math.PI/4, 0, Math.PI*2); ctx.fill();
+                }
+            }
+
+            ctx.restore();
+        }
+
+        function drawEnemy(e) {
+            ctx.save();
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 5;
+            ctx.shadowOffsetY = 3;
+
+            if (e.isItem) {
+                ctx.fillStyle = '#222';
+                ctx.strokeStyle = e.itemType === 0 ? '#0ff' : (e.itemType === 1 ? '#0f0' : '#f00');
+                ctx.lineWidth = 2;
+                ctx.shadowColor = ctx.strokeStyle;
+                ctx.shadowBlur = 10;
+                
+                ctx.beginPath();
+                ctx.arc(e.x, e.y, 16, 0, Math.PI*2);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.shadowBlur = 0;
+                ctx.font = '16px "Jua"';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                let icon = '';
+                if (e.itemType === 0) icon = '🛡️';
+                else if (e.itemType === 1) icon = '🚁';
+                else icon = '💣';
+                
+                ctx.fillText(icon, e.x, e.y + 1); 
+                ctx.restore();
+                return;
+            }
+
+            if (e.isBonus) {
+                ctx.fillStyle = '#ffff00';
+                ctx.shadowColor = '#ffcc00';
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                for (let i = 0; i < 5; i++) {
+                    ctx.lineTo(Math.cos( (18 + i * 72) / 180 * Math.PI ) * 16 + e.x,
+                               -Math.sin( (18 + i * 72) / 180 * Math.PI ) * 16 + e.y);
+                    ctx.lineTo(Math.cos( (54 + i * 72) / 180 * Math.PI ) * 8 + e.x,
+                               -Math.sin( (54 + i * 72) / 180 * Math.PI ) * 8 + e.y);
+                }
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = '#000';
+                ctx.shadowBlur = 0;
+                ctx.font = 'bold 16px "Space Mono"';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('?', e.x, e.y + 1);
+
+                ctx.restore();
+                return;
+            }
+
+            ctx.fillStyle = e.color || '#aa00ff';
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI*2/6) * i + frameCount * 0.05;
+                ctx.beginPath();
+                ctx.arc(e.x + Math.cos(angle)*12, e.y + Math.sin(angle)*12, 5, 0, Math.PI*2);
+                ctx.fill();
+            }
+
+            ctx.beginPath(); ctx.arc(e.x, e.y, 14, 0, Math.PI*2); ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath(); ctx.ellipse(e.x - 5, e.y - 3, 4, 5, -0.2, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(e.x + 5, e.y - 3, 4, 5, 0.2, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#000000';
+            ctx.beginPath(); ctx.arc(e.x - 5, e.y - 3, 2, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(e.x + 5, e.y - 3, 2, 0, Math.PI*2); ctx.fill();
+
+            ctx.strokeStyle = '#000000'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(e.x - 9, e.y - 8); ctx.lineTo(e.x - 3, e.y - 5); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(e.x + 9, e.y - 8); ctx.lineTo(e.x + 3, e.y - 5); ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawBoss() {
+            if (!boss) return;
+            const b = boss;
+            ctx.save();
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetY = 5;
+
+            if (b.type === 0) {
+                ctx.fillStyle = '#8800cc';
+                for(let i = 0; i < 8; i++) {
+                    const angle = (Math.PI*2/8) * i - frameCount * 0.02;
+                    ctx.beginPath(); ctx.arc(b.x + Math.cos(angle)*35, b.y + Math.sin(angle)*35, 12, 0, Math.PI*2); ctx.fill();
+                }
+                ctx.fillStyle = '#aa00ff';
+                ctx.beginPath(); ctx.arc(b.x, b.y, 35, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#ffcc00';
+                ctx.beginPath(); ctx.moveTo(b.x - 20, b.y - 25); ctx.lineTo(b.x - 25, b.y - 50); ctx.lineTo(b.x - 10, b.y - 35); ctx.lineTo(b.x, b.y - 55); ctx.lineTo(b.x + 10, b.y - 35); ctx.lineTo(b.x + 25, b.y - 50); ctx.lineTo(b.x + 20, b.y - 25); ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath(); ctx.arc(b.x - 15, b.y - 5, 10, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(b.x + 15, b.y - 5, 10, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#ff0000'; 
+                ctx.beginPath(); ctx.arc(b.x - 12, b.y - 5, 5, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(b.x + 12, b.y - 5, 5, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath(); ctx.moveTo(b.x - 10, b.y + 15); ctx.lineTo(b.x - 5, b.y + 25); ctx.lineTo(b.x, b.y + 15); ctx.fill(); ctx.beginPath(); ctx.moveTo(b.x + 10, b.y + 15); ctx.lineTo(b.x + 5, b.y + 25); ctx.lineTo(b.x, b.y + 15); ctx.fill();
+            } else if (b.type === 1) {
+                ctx.fillStyle = '#ff6600';
+                ctx.beginPath(); ctx.moveTo(b.x, b.y - 40); ctx.lineTo(b.x - 55, b.y + 10); ctx.lineTo(b.x, b.y + 50); ctx.lineTo(b.x + 55, b.y + 10); ctx.fill();
+                ctx.fillStyle = '#ffcc00'; ctx.beginPath(); ctx.arc(b.x, b.y + 5, 18, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#ff0000'; ctx.beginPath(); ctx.arc(b.x, b.y + 5, 8, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = '#ff9900'; ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.moveTo(b.x - 20, b.y - 10); ctx.lineTo(b.x - 45, b.y - 20); ctx.stroke(); ctx.beginPath(); ctx.moveTo(b.x + 20, b.y - 10); ctx.lineTo(b.x + 45, b.y - 20); ctx.stroke();
+            } else if (b.type === 2) {
+                ctx.fillStyle = '#cc0000';
+                ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(b.x - 70, b.y - 20, 140, 40, 15); else ctx.rect(b.x - 70, b.y - 20, 140, 40); ctx.fill();
+                ctx.fillStyle = '#ff3333'; ctx.beginPath(); ctx.arc(b.x, b.y - 20, 30, Math.PI, 0); ctx.fill();
+                ctx.fillStyle = '#00ffff'; ctx.beginPath(); ctx.ellipse(b.x, b.y, 25, 10, 0, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#555'; ctx.fillRect(b.x - 65, b.y + 20, 15, 20); ctx.fillRect(b.x + 50, b.y + 20, 15, 20);
+            } else if (b.type === 3) {
+                ctx.fillStyle = '#111';
+                ctx.beginPath(); ctx.arc(b.x, b.y, 45, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = '#f00'; ctx.lineWidth = 5;
+                for(let i=0; i<12; i++){
+                    let angle = (Math.PI*2/12)*i + frameCount*0.05;
+                    ctx.beginPath(); ctx.moveTo(b.x + Math.cos(angle)*45, b.y + Math.sin(angle)*45); ctx.lineTo(b.x + Math.cos(angle)*65, b.y + Math.sin(angle)*65); ctx.stroke();
+                }
+                ctx.fillStyle = '#ff0000'; ctx.shadowColor = '#f00'; ctx.shadowBlur = 20;
+                ctx.beginPath(); ctx.arc(b.x, b.y, 20 + Math.sin(frameCount*0.2)*5, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(b.x, b.y, 8, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
+            }
+
+            ctx.restore();
+
+            const hpPct = Math.max(0, b.hp / b.maxHp);
+            ctx.fillStyle = '#222'; ctx.fillRect(b.x-40, b.y-60, 80, 8);
+            ctx.fillStyle = hpPct > 0.3 ? '#0f0' : '#f00'; ctx.fillRect(b.x-40, b.y-60, 80*hpPct, 8);
+        }
+
+        function spawnEnemy() {
+            enemiesSpawnedCount++;
+            
+            if (enemiesSpawnedCount % 30 === 0 && !(bossActive && currentLevel >= 4)) {
+                 enemies.push({ 
+                    x: Math.random()*(W-40)+20, y: -20, 
+                    speed: 2, shootTimer: 999, 
+                    isItem: true, 
+                    itemType: Math.floor(Math.random() * 3), 
+                    hp: 1 
+                });
+                return;
+            }
+
+            if (enemiesSpawnedCount % 10 === 0 && !(bossActive && currentLevel >= 4)) {
+                enemies.push({ 
+                    x: Math.random()*(W-40)+20, y: -20, 
+                    speed: 2.5 + difficulty*0.5, shootTimer: 999, 
+                    color: '#ffff00', hp: 1, isBonus: true 
+                });
+                return;
+            }
+
+            const colors = ['#ff00ff','#ff8800','#ff4444','#88ff00','#00ccff'];
+            enemies.push({ 
+                x: Math.random()*(W-40)+20, y: -20, 
+                speed: 1.5 + difficulty*0.5 + Math.random(), 
+                shootTimer: Math.random()*60+30, 
+                color: colors[Math.floor(Math.random()*colors.length)], 
+                hp: 1, type: Math.floor(Math.random()*4) 
+            });
+        }
+
+        function addParticles(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                particles.push({ x, y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 25+Math.random()*20, color, size: Math.random()*4+1 });
+            }
+            if (particles.length > 300) {
+                particles.splice(0, particles.length - 300);
+            }
+        }
+
+        function showFloatingText(x, y, text, color="#fff") {
+            floatingTexts.push({ x: x, y: y, text: text, color: color, life: 60 });
+        }
+
+        function drawFloatingTexts() {
+            floatingTexts = floatingTexts.filter(ft => {
+                ft.y -= 1;
+                ft.life--;
+                ctx.save();
+                ctx.globalAlpha = ft.life / 60;
+                ctx.fillStyle = ft.color;
+                ctx.font = '20px "Jua"';
+                ctx.textAlign = 'center';
+                ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.restore();
+                return ft.life > 0;
+            });
+        }
+
+        function showScreen(id) {
+            ['title-screen','quiz-screen','gameover-screen'].forEach(s => document.getElementById(s).classList.toggle('hidden', s !== id));
+        }
+
+        function updateHUD() {
+            document.getElementById('score-display').textContent = score;
+            document.getElementById('bomb-display').textContent = player ? player.bombs : 0;
+            document.getElementById('lives-display').innerHTML = Array(lives).fill('<span style="color:#0f0">♥</span>').join('') + Array(3-lives).fill('<span style="color:#555">♥</span>').join('');
+            document.getElementById('revive-display').textContent = 3 - reviveCount;
+        }
+
+        function triggerBomb() {
+            if (!gameRunning || gamePaused || !player || player.bombs <= 0) return;
+            
+            player.bombs--;
+            updateHUD();
+            
+            flashOverlay.classList.remove('flash-anim');
+            void flashOverlay.offsetWidth; 
+            flashOverlay.classList.add('flash-anim');
+
+            enemyBullets = [];
+            
+            enemies = enemies.filter(e => {
+                if (e.isItem || e.isBonus) return true; 
+                addParticles(e.x, e.y, e.color || '#fff', 15);
+                score += 50;
+                return false;
+            });
+
+            if (boss) {
+                boss.hp -= 150;
+                addParticles(boss.x, boss.y, '#ff0000', 40);
+                showFloatingText(boss.x, boss.y, "BOMB DAMAGE!", "#ff0");
+            }
+            updateHUD();
+        }
+
+        function collectItem(x, y, type) {
+            if (type === 0) {
+                addParticles(x, y, '#00ffff', 30);
+                player.shieldHits = 3;
+                showFloatingText(x, y, "🛡️ 보호막 3회 획득!", "#0ff");
+            } else if (type === 1) {
+                addParticles(x, y, '#00ff00', 30);
+                player.droneCount = Math.min((player.droneCount || 0) + 1, 4); 
+                showFloatingText(x, y, "🚁 보조 도우미 추가!", "#0f0");
+            } else {
+                addParticles(x, y, '#ff0000', 30);
+                player.bombs++;
+                updateHUD();
+                showFloatingText(x, y, "💣 폭탄 획득! (8번 키)", "#ff4444");
+            }
+        }
+
+        function takeDamage() {
+            if (player.hasCheatShield) return;
+
+            if (player.shieldHits > 0) {
+                player.shieldHits--;
+                player.invincible = 40; 
+                addParticles(player.x, player.y, '#00ffaa', 15);
+                showFloatingText(player.x, player.y, "방어!", "#0f0");
+                return;
+            }
+
+            lives--; 
+            playerWeaponLevel = 1; 
+            player.droneCount = 0; 
+            player.bombs = 0;
+            
+            addParticles(player.x, player.y, '#f80', 20); 
+            updateHUD(); 
+            
+            if (lives > 0) {
+                player.invincible = 90;
+            } else {
+                if (reviveCount < 3) triggerQuiz('revive');
+                else gameOver();
+            }
+        }
+
+        // --- 입력 처리 ---
+        document.addEventListener('keydown', e => { 
+            keys[e.key] = true; keys[e.code] = true; 
+            
+            if (e.key === '8' || e.code === 'Numpad8') {
+                triggerBomb();
+            }
+
+            keyBuffer += e.key;
+            if (keyBuffer.length > 4) keyBuffer = keyBuffer.slice(-4);
+            if (keyBuffer === '7942') {
+                if (player && !player.hasCheatShield) {
+                    player.hasCheatShield = true;
+                    addParticles(player.x, player.y, '#00ffff', 50);
+                    showFloatingText(player.x, player.y, "CHEAT: 무적 방어막", "#0ff");
+                }
+                keyBuffer = ''; 
+            }
+        });
+        document.addEventListener('keyup', e => { keys[e.key] = false; keys[e.code] = false; });
+        
+        function handleMoveEvent(e) {
+            e.preventDefault();
+            if(!gameRunning || gamePaused) return;
+            isDragging = true;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            targetX = clientX;
+            targetY = clientY;
+        }
+        canvas.addEventListener('mousedown', handleMoveEvent);
+        canvas.addEventListener('mousemove', (e) => { if(isDragging) handleMoveEvent(e); });
+        window.addEventListener('mouseup', () => { isDragging = false; targetX = null; targetY = null; });
+        
+        canvas.addEventListener('touchstart', handleMoveEvent, {passive:false});
+        canvas.addEventListener('touchmove', handleMoveEvent, {passive:false});
+        canvas.addEventListener('touchend', () => { isDragging = false; targetX = null; targetY = null; });
+
+        function isLeft() { return keys['ArrowLeft']||keys['a']||keys['A']||keys['ㅁ']; }
+        function isRight() { return keys['ArrowRight']||keys['d']||keys['D']||keys['ㅇ']; }
+        function isUp() { return keys['ArrowUp']||keys['w']||keys['W']||keys['ㅈ']; }
+        function isDown() { return keys['ArrowDown']||keys['s']||keys['S']||keys['ㄴ']; }
+        function isFire() { return keys[' '] || isDragging; } 
+
+        // --- 퀴즈 로직 ---
+        function triggerQuiz(type = 'revive') {
+            currentQuizType = type;
+            gamePaused = true;
+            container.classList.add('shake');
+            setTimeout(() => container.classList.remove('shake'), 400);
+
+            if (usedQuizIndices.length >= quizDB.length) usedQuizIndices = [];
+            let idx; do { idx = Math.floor(Math.random()*quizDB.length); } while (usedQuizIndices.includes(idx));
+            usedQuizIndices.push(idx);
+            
+            const quiz = quizDB[idx];
+            document.getElementById('quiz-question').textContent = quiz.q;
+            
+            const optDiv = document.getElementById('quiz-options');
+            optDiv.innerHTML = '';
+            document.getElementById('quiz-result').classList.add('hidden');
+            
+            const quizTitle = document.querySelector('#quiz-screen h2');
+            if (type === 'upgrade') {
+                quizTitle.textContent = "BONUS QUIZ!";
+                quizTitle.style.color = "#0ff";
+            } else {
+                quizTitle.textContent = "SYSTEM HACKED!";
+                quizTitle.style.color = "#f00";
+            }
+
+            const options = [quiz.correct, ...quiz.wrong].sort(() => Math.random()-0.5);
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'quiz-option';
+                btn.textContent = opt;
+                btn.onclick = () => answerQuiz(opt === quiz.correct, quiz.correct);
+                optDiv.appendChild(btn);
+            });
+            showScreen('quiz-screen');
+        }
+
+        function answerQuiz(correct, correctAnswer) {
+            const resEl = document.getElementById('quiz-result');
+            resEl.classList.remove('hidden');
+            document.querySelectorAll('.quiz-option').forEach(b => b.disabled = true);
+            
+            if (correct) {
+                if (currentQuizType === 'upgrade') {
+                    resEl.textContent = '🎉 정답! 무기 레벨 업! 🎉'; 
+                    resEl.style.color = '#0ff';
+                    playerWeaponLevel = Math.min(7, playerWeaponLevel + 1); 
+                    score += 500;
+                    updateHUD();
+                    setTimeout(() => { 
+                        gamePaused = false; 
+                        showScreen(null); 
+                        requestAnimationFrame(gameLoop); 
+                    }, 1200);
+                } else {
+                    resEl.textContent = '🎉 정답! 시스템 복구! 🎉'; 
+                    resEl.style.color = '#0f0';
+                    lives = 1; 
+                    reviveCount++; 
+                    updateHUD();
+                    setTimeout(() => { 
+                        gamePaused = false; 
+                        showScreen(null); 
+                        enemyBullets = []; 
+                        player.invincible = 120; 
+                        requestAnimationFrame(gameLoop); 
+                    }, 1200);
+                }
+            } else {
+                score = Math.max(0, score - 1000);
+                updateHUD();
+
+                if (currentQuizType === 'upgrade') {
+                    resEl.textContent = `❌ 오답! 감점 -1000 (정답: ${correctAnswer})`; 
+                    resEl.style.color = '#fa0';
+                    setTimeout(() => { 
+                        gamePaused = false; 
+                        showScreen(null); 
+                        requestAnimationFrame(gameLoop); 
+                    }, 2000);
+                } else {
+                    resEl.textContent = `❌ 오답! 감점 -1000 & 파괴됨! (정답: ${correctAnswer})`; 
+                    resEl.style.color = '#f00';
+                    setTimeout(() => gameOver(), 2000);
+                }
+            }
+        }
+
+        async function gameWin() {
+            gameRunning = false;
+            document.getElementById('hud').classList.add('hidden');
+            document.getElementById('final-score').textContent = `최종 점수: ${score}`;
+            
+            const titleEl = document.getElementById('gameover-title-text');
+            titleEl.innerHTML = '🎉 MISSION CLEAR 🎉<br>우주 평화 달성!'; 
+            titleEl.style.color = '#0f0'; 
+            titleEl.style.textShadow = '0 0 20px #0f0';
+            
+            document.getElementById('fireworksCanvas').classList.remove('hidden');
+            startFireworks();
+
+            document.getElementById('name-entry').classList.remove('hidden');
+            document.getElementById('submit-score-btn').disabled = false;
+            document.getElementById('submit-score-btn').textContent = '점수 저장';
+            showScreen('gameover-screen');
+            await fetchLeaderboard();
+        }
+
+        async function gameOver() {
+            gameRunning = false;
+            document.getElementById('hud').classList.add('hidden');
+            document.getElementById('final-score').textContent = `최종 점수: ${score}`;
+            
+            const titleEl = document.getElementById('gameover-title-text');
+            titleEl.innerHTML = 'GAME OVER'; 
+            titleEl.style.color = '#f00'; 
+            titleEl.style.textShadow = '0 0 20px #f00';
+            
+            document.getElementById('fireworksCanvas').classList.add('hidden');
+            stopFireworks();
+
+            document.getElementById('name-entry').classList.remove('hidden');
+            document.getElementById('submit-score-btn').disabled = false;
+            document.getElementById('submit-score-btn').textContent = '점수 저장';
+            showScreen('gameover-screen');
+            await fetchLeaderboard();
+        }
+
+        // --- 폭죽 축하 애니메이션 로직 ---
+        function startFireworks() {
+            const fwCanvas = document.getElementById('fireworksCanvas');
+            fwCanvas.width = window.innerWidth;
+            fwCanvas.height = window.innerHeight;
+            const fCtx = fwCanvas.getContext('2d');
+            fwParticles = [];
+            
+            function fwLoop() {
+                fwAnimationId = requestAnimationFrame(fwLoop);
+                
+                fCtx.globalCompositeOperation = 'destination-out';
+                fCtx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                fCtx.fillRect(0, 0, fwCanvas.width, fwCanvas.height);
+                fCtx.globalCompositeOperation = 'lighter';
+                
+                if (Math.random() < 0.08) {
+                    const cx = Math.random() * fwCanvas.width;
+                    const cy = Math.random() * (fwCanvas.height * 0.6);
+                    const hue = Math.random() * 360;
+                    for (let i = 0; i < 40; i++) {
+                        const speed = Math.random() * 6 + 2;
+                        const angle = Math.random() * Math.PI * 2;
+                        fwParticles.push({
+                            x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+                            life: 1, decay: Math.random() * 0.02 + 0.015, color: `hsl(${hue}, 100%, 60%)`
+                        });
+                    }
+                }
+                
+                for(let i = fwParticles.length - 1; i >= 0; i--) {
+                    let p = fwParticles[i];
+                    p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.life -= p.decay;
+                    if (p.life <= 0) { fwParticles.splice(i, 1); } 
+                    else {
+                        fCtx.beginPath(); fCtx.arc(p.x, p.y, Math.max(0.5, p.life * 3), 0, Math.PI*2);
+                        fCtx.fillStyle = p.color; fCtx.fill();
+                    }
+                }
+            }
+            if(!fwAnimationId) fwLoop();
+        }
+
+        function stopFireworks() {
+            if (fwAnimationId) { cancelAnimationFrame(fwAnimationId); fwAnimationId = null; }
+            fwParticles = [];
+        }
+
+        // --- 메인 루프 ---
+        function gameLoop() {
+            if (!gameRunning || gamePaused) return;
+            frameCount++;
+            difficulty = Math.min(score / 5000, 3);
+
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, W, H);
+            drawBackground();
+
+            if(player.invincible > 0) player.invincible--;
+
+            const spd = 6;
+            if (isLeft()) player.x -= spd;
+            if (isRight()) player.x += spd;
+            if (isUp()) player.y -= spd;
+            if (isDown()) player.y += spd;
+            
+            if (targetX !== null && targetY !== null) {
+                player.x += (targetX - player.x) * 0.15;
+                player.y += (targetY - player.y) * 0.15;
+            }
+            
+            player.x = Math.max(20, Math.min(W-20, player.x));
+            player.y = Math.max(30, Math.min(H-30, player.y));
+
+            if (isFire() && player.shootCooldown <= 0) { 
+                firePlayerBullets(); 
+                player.shootCooldown = Math.max(5, 12 - playerWeaponLevel); 
+            }
+            player.shootCooldown--;
+
+            drawShip(player.x, player.y);
+
+            playerBullets = playerBullets.filter(b => {
+                b.y -= b.speed; b.x += b.vx || 0;
+                ctx.save(); 
+                ctx.fillStyle = b.color || '#00ffff';
+                ctx.shadowColor = b.color || '#00ffff'; ctx.shadowBlur = 6;
+                ctx.beginPath(); ctx.arc(b.x, b.y, 5, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath(); ctx.arc(b.x-1.5, b.y-1.5, 2, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+                return b.y > -20 && b.x > -20 && b.x < W+20;
+            });
+
+            spawnTimer--;
+            if (spawnTimer <= 0 && !isWinning) {
+                if (bossActive && !boss) {
+                    let bossType = (currentLevel - 1) % 3;
+                    let bMaxHp = 25 * currentLevel;
+                    if (currentLevel >= 4) { bossType = 3; bMaxHp = 250; }
+                    boss = { x: W/2, y: 100, speed: 0, shootTimer: 60, hp: bMaxHp, maxHp: bMaxHp, type: bossType }; 
+                } else if (!bossActive && enemiesDestroyedCount < 15 * currentLevel) { 
+                    spawnEnemy(); 
+                    spawnTimer = Math.max(20, 80 - difficulty*15); 
+                } else if (!bossActive && enemiesDestroyedCount >= 15 * currentLevel) { 
+                    bossActive = true; spawnTimer = 100;
+                } else if (boss && boss.type === 3) {
+                    spawnEnemy();
+                    spawnTimer = Math.max(30, 80 - difficulty*10); 
+                }
+            }
+
+            if (boss) {
+                boss.x = W/2 + Math.sin(frameCount*0.03) * (W/3);
+                boss.shootTimer--;
+                if (boss.shootTimer <= 0) {
+                    if (boss.type === 0) {
+                        const bulletCount = 10 + (currentLevel * 3);
+                        for (let i = 0; i < bulletCount; i++) {
+                            const angle = (Math.PI*2/bulletCount)*i + frameCount*0.05;
+                            enemyBullets.push({ x: boss.x, y: boss.y+20, vx: Math.cos(angle)*(3.5 + currentLevel*0.2), vy: Math.sin(angle)*(3.5 + currentLevel*0.2) });
+                        }
+                    } else if (boss.type === 1) {
+                        const dx = player.x - boss.x, dy = player.y - boss.y, d = Math.sqrt(dx*dx+dy*dy) || 1;
+                        for (let i = -3; i <= 3; i++) {
+                            const angle = Math.atan2(dy, dx) + (i * 0.12);
+                            enemyBullets.push({ x: boss.x, y: boss.y+20, vx: Math.cos(angle)*(4.5 + currentLevel*0.3), vy: Math.sin(angle)*(4.5 + currentLevel*0.3) });
+                        }
+                    } else if (boss.type === 2) {
+                        for (let i = 0; i < 4 + currentLevel; i++) {
+                            const angle1 = frameCount * 0.15 + (Math.PI/4 * i);
+                            const angle2 = -frameCount * 0.15 + (Math.PI/4 * i);
+                            enemyBullets.push({ x: boss.x - 55, y: boss.y + 20, vx: Math.cos(angle1)*4, vy: Math.sin(angle1)*4 });
+                            enemyBullets.push({ x: boss.x + 55, y: boss.y + 20, vx: Math.cos(angle2)*4, vy: Math.sin(angle2)*4 });
+                        }
+                    } else if (boss.type === 3) {
                         const spiralAngle = frameCount * 0.3;
                         for(let i=0; i<6; i++){
                              let a = spiralAngle + (Math.PI/3)*i;
@@ -1040,16 +1009,10 @@ enemyBullets.push({ x: boss.x + 55, y: boss.y + 20, vx: Math.cos(angle2)*4, vy: 
                                 const angle = Math.atan2(dy, dx) + (i * 0.1);
                                 enemyBullets.push({ x: boss.x, y: boss.y+30, vx: Math.cos(angle)*7, vy: Math.sin(angle)*7 });
                             }
-                        const dx = player.x - boss.x, dy = player.y - boss.y, d = Math.sqrt(dx*dx+dy*dy) || 1;
-                        const angle = Math.atan2(dy, dx);
-                        for (let i = -4; i <= 4; i++) {
-                            const a = angle + (i * Math.PI / 10);
-                            enemyBullets.push({ x: boss.x, y: boss.y, vx: Math.cos(a)*5, vy: Math.sin(a)*5 });
-}
-}
+                        }
+                    }
                     boss.shootTimer = Math.max(15, 60 - difficulty*15 - currentLevel*5);
-                    boss.shootTimer = Math.max(40, 90 - currentLevel * 5);
-}
+                }
                 drawBoss();
 
                 for (let i = playerBullets.length-1; i >= 0; i--) {
@@ -1073,66 +1036,14 @@ enemyBullets.push({ x: boss.x + 55, y: boss.y + 20, vx: Math.cos(angle2)*4, vy: 
                             }
                             updateHUD();
                             break; 
-            }
-
-            // Enemy bullet patterns
-            for (let i = 0; i < enemies.length; i++) {
-                const e = enemies[i];
-                e.y += e.speed;
-                
-                if (e.isItem || e.isBonus) {
-                    drawEnemy(e);
-                    continue;
+                        }
+                    }
                 }
-
-                if (!e.isItem && !e.isBonus) {
-                    e.shootTimer--;
-                    if (e.shootTimer <= 0 && Math.random() < 0.3 && e.y > 30) {
-                        let bulletCount = 1;
-                        if (e.type === 1) bulletCount = 2;
-                        if (e.type === 2) bulletCount = 3;
-                        if (e.type === 3) bulletCount = 4;
-                        
-                        for (let j = 0; j < bulletCount; j++) {
-                            const spreadAngle = (bulletCount > 1) ? ((j - (bulletCount-1)/2) * (Math.PI/6)) : 0;
-                            const baseAngle = Math.PI/2;
-                            const angle = baseAngle + spreadAngle;
-                            const speed = 3 + difficulty;
-                            enemyBullets.push({ 
-                                x: e.x, 
-                                y: e.y, 
-                                vx: Math.cos(angle) * speed, 
-                                vy: Math.sin(angle) * speed 
-                            });
-}
-                        e.shootTimer = Math.random()*120+40;
-}
-}
-
+                
                 if (boss && player.invincible <= 0 && Math.abs(boss.x-player.x) < 40 && Math.abs(boss.y-player.y) < 20) { 
-                drawEnemy(e);
+                    takeDamage();
+                }
             }
-
-            // Collision check: player with enemyBullets
-            for (let i = enemyBullets.length - 1; i >= 0; i--) {
-                const b = enemyBullets[i];
-                b.x += b.vx; b.y += b.vy;
-                
-                ctx.save();
-                ctx.fillStyle = '#ffff00';
-                ctx.shadowColor = '#ffff00'; ctx.shadowBlur = 8;
-                ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = '#ff9900';
-                ctx.beginPath(); ctx.arc(b.x, b.y, 2, 0, Math.PI*2); ctx.fill();
-                ctx.restore();
-                
-                if (player && player.invincible <= 0 && Math.hypot(b.x - player.x, b.y - player.y) < 20) {
-takeDamage();
-                    enemyBullets.splice(i, 1);
-                } else if (b.x < -50 || b.x > W+50 || b.y < -50 || b.y > H+50) {
-                    enemyBullets.splice(i, 1);
-}
-}
 
             enemies = enemies.filter(e => {
                 e.y += e.speed; e.shootTimer--;
@@ -1142,44 +1053,11 @@ takeDamage();
                     e.shootTimer = 999; 
                 }
                 drawEnemy(e);
-            particles = particles.filter(p => {
-                p.x += p.vx; p.y += p.vy; p.vy += 0.3; p.life--;
-                ctx.fillStyle = p.color;
-                ctx.globalAlpha = p.life / (25+20);
-                ctx.fillRect(p.x, p.y, p.size, p.size);
-                ctx.globalAlpha = 1;
-                return p.life > 0;
-            });
 
                 if (e.isItem && Math.abs(e.x-player.x) < 25 && Math.abs(e.y-player.y) < 25) {
                     collectItem(e.x, e.y, e.itemType);
                     return false; 
-            // Collision check: playerBullets with enemies
-            for (let i = playerBullets.length - 1; i >= 0; i--) {
-                const pb = playerBullets[i];
-                let hit = false;
-
-                for (let j = enemies.length - 1; j >= 0; j--) {
-                    const e = enemies[j];
-                    if (Math.hypot(pb.x - e.x, pb.y - e.y) < 25) {
-                        e.hp--;
-                        addParticles(e.x, e.y, e.color || '#fff', 8);
-                        hit = true;
-                        
-                        if (e.hp <= 0) {
-                            score += e.isBonus ? 100 : 10;
-                            if (e.isBonus) {
-                                triggerQuiz('upgrade');
-                            } else if (e.isItem) {
-                                collectItem(e.x, e.y, e.itemType);
-                            } else {
-                                enemiesDestroyedCount++;
-                            }
-                            addParticles(e.x, e.y, e.color || '#fff', 20);
-                            enemies.splice(j, 1);
-                        }
-                    }
-}
+                }
 
                 for (let i=playerBullets.length-1; i>=0; i--) {
                     const b = playerBullets[i];
@@ -1189,23 +1067,8 @@ takeDamage();
                         else { score += 100; enemiesDestroyedCount++; }
                         updateHUD(); 
                         return false; 
-                if (boss && Math.hypot(pb.x - boss.x, pb.y - boss.y) < 40) {
-                    boss.hp--;
-                    addParticles(boss.x, boss.y, '#ff0000', 5);
-                    if (boss.hp <= 0) {
-                        score += 500;
-                        boss = null;
-                        addParticles(boss ? boss.x : W/2, boss ? boss.y : 100, '#ff00ff', 50);
-                        enemiesDestroyedCount = 0;
-                        bossActive = false;
-                        currentLevel++;
-                        if (currentLevel > 4) {
-                            isWinning = true;
-                            gameWin();
-                        }
-}
-                    hit = true;
-}
+                    }
+                }
                 
                 if (player.invincible <= 0 && !e.isItem && Math.abs(e.x-player.x) < 18 && Math.abs(e.y-player.y) < 18) { 
                     takeDamage();
@@ -1226,35 +1089,18 @@ takeDamage();
                 if (player.invincible <= 0 && Math.abs(b.x-player.x) < 10 && Math.abs(b.y-player.y) < 10) { 
                     takeDamage();
                     return false; 
-                if (hit) { playerBullets.splice(i, 1); }
-            }
-
-            // Collision check: player with items
-            for (let i = 0; i < enemies.length; i++) {
-                if (enemies[i].isItem && Math.hypot(enemies[i].x - player.x, enemies[i].y - player.y) < 30) {
-                    collectItem(enemies[i].x, enemies[i].y, enemies[i].itemType);
-                    enemies.splice(i, 1);
-                    i--;
-}
+                }
                 return b.x > -20 && b.x < W+20 && b.y > -20 && b.y < H+20;
             });
             if (enemyBullets.length > 200) enemyBullets.splice(0, enemyBullets.length - 200);
-            }
 
             drawFloatingTexts();
-            // Remove off-screen enemies
-            enemies = enemies.filter(e => e.y < H + 50);
 
             if (gameRunning && !gamePaused) gameLoopAnimId = requestAnimationFrame(gameLoop);
-            drawBoss();
-            drawFloatingTexts();
-            updateHUD();
-            
-            if (gameRunning) requestAnimationFrame(gameLoop);
-}
+        }
 
         // 무기 7단계 확장 (색상 및 궤적)
-function firePlayerBullets() {
+        function firePlayerBullets() {
             const y = player.y - 18;
             const spd = 10 + (playerWeaponLevel * 2.0); 
             const colors = ['#00ffff', '#00ff00', '#ffff00', '#ff8800', '#ff00ff', '#ff0000', '#ffffff']; 
@@ -1274,32 +1120,13 @@ function firePlayerBullets() {
                 playerBullets.push({x: player.x+6, y: y-5, speed: spd, color: bColor}); 
                 playerBullets.push({x: player.x-16, y: y, speed: spd, vx:-1.5, color: bColor}); 
                 playerBullets.push({x: player.x+16, y: y, speed: spd, vx:1.5, color: bColor}); 
-            const bulletSpeed = 8;
-            const baseColor = ['#00ffff', '#00ff00', '#ff00ff', '#ffff00', '#ff6600', '#00ff88', '#ff0099'][Math.min(playerWeaponLevel - 1, 6)];
-            
-            if (playerWeaponLevel === 1) {
-                playerBullets.push({ x: player.x, y: player.y - 20, speed: bulletSpeed, color: baseColor });
-            } else if (playerWeaponLevel === 2) {
-                playerBullets.push({ x: player.x - 6, y: player.y - 20, speed: bulletSpeed, color: baseColor });
-                playerBullets.push({ x: player.x + 6, y: player.y - 20, speed: bulletSpeed, color: baseColor });
-            } else if (playerWeaponLevel === 3) {
-                playerBullets.push({ x: player.x, y: player.y - 20, speed: bulletSpeed, color: baseColor });
-                playerBullets.push({ x: player.x - 10, y: player.y - 15, speed: bulletSpeed, color: baseColor, vx: -2 });
-                playerBullets.push({ x: player.x + 10, y: player.y - 15, speed: bulletSpeed, color: baseColor, vx: 2 });
-            } else if (playerWeaponLevel === 4) {
-                for (let i = -2; i <= 2; i++) {
-                    playerBullets.push({ x: player.x + i * 8, y: player.y - 20, speed: bulletSpeed, color: baseColor });
-                }
-} else if (playerWeaponLevel === 5) {
+            } else if (playerWeaponLevel === 5) {
                 playerBullets.push({x: player.x, y: y-8, speed: spd, color: bColor}); 
                 playerBullets.push({x: player.x-10, y: y-5, speed: spd, vx:-1, color: bColor}); 
                 playerBullets.push({x: player.x+10, y: y-5, speed: spd, vx:1, color: bColor}); 
                 playerBullets.push({x: player.x-20, y: y, speed: spd, vx:-2, color: bColor}); 
                 playerBullets.push({x: player.x+20, y: y, speed: spd, vx:2, color: bColor}); 
-                for (let i = -2; i <= 2; i++) {
-                    playerBullets.push({ x: player.x + i * 8, y: player.y - 20, speed: bulletSpeed, color: baseColor, vx: i * 0.5 });
-                }
-} else if (playerWeaponLevel === 6) {
+            } else if (playerWeaponLevel === 6) {
                 playerBullets.push({x: player.x-4, y: y-8, speed: spd, vx:-0.5, color: bColor}); 
                 playerBullets.push({x: player.x+4, y: y-8, speed: spd, vx:0.5, color: bColor}); 
                 playerBullets.push({x: player.x-12, y: y-4, speed: spd, vx:-1.5, color: bColor}); 
@@ -1314,39 +1141,18 @@ function firePlayerBullets() {
                 playerBullets.push({x: player.x+18, y: y-2, speed: spd, vx:2, color: bColor}); 
                 playerBullets.push({x: player.x-28, y: y+2, speed: spd, vx:-3, color: bColor}); 
                 playerBullets.push({x: player.x+28, y: y+2, speed: spd, vx:3, color: bColor}); 
-                for (let i = -3; i <= 3; i++) {
-                    playerBullets.push({ x: player.x + i * 7, y: player.y - 20, speed: bulletSpeed, color: baseColor, vx: i * 0.8 });
-                }
-            } else if (playerWeaponLevel >= 7) {
-                for (let i = 0; i < 7; i++) {
-                    const angle = (Math.PI * 2 / 7) * i;
-                    const speed = 6;
-                    playerBullets.push({ 
-                        x: player.x, 
-                        y: player.y - 20, 
-                        speed: bulletSpeed, 
-                        color: baseColor, 
-                        vx: Math.cos(angle - Math.PI/2) * speed, 
-                        vy: Math.sin(angle - Math.PI/2) * speed 
-                    });
-                }
-}
+            }
 
             // 다중 도우미 드론의 보조 레이저 발사
-if (player.droneCount > 0) {
+            if (player.droneCount > 0) {
                 for (let i = 0; i < player.droneCount; i++) {
                     let angleOffset = (Math.PI * 2 / player.droneCount) * i + (frameCount * 0.05);
                     let dX = player.x + Math.cos(angleOffset) * 40;
                     let dY = player.y + Math.sin(angleOffset) * 40;
                     playerBullets.push({x: dX, y: dY, speed: spd, color: '#0f0'}); 
-                for (let d = 0; d < player.droneCount; d++) {
-                    const angleOffset = (Math.PI * 2 / player.droneCount) * d + (frameCount * 0.05);
-                    const dX = player.x + Math.cos(angleOffset) * 40;
-                    const dY = player.y + Math.sin(angleOffset) * 40;
-                    playerBullets.push({ x: dX, y: dY - 20, speed: bulletSpeed, color: '#00ff00' });
-}
-}
-}
+                }
+            }
+        }
 
         // --- 게임 시작 ---
         window.startGame = function() {
@@ -1354,15 +1160,7 @@ if (player.droneCount > 0) {
 
             score = 0; lives = 3; difficulty = 0; frameCount = 0; spawnTimer = 0;
             player = { x: W/2, y: H-80, shootCooldown: 0, invincible: 60, hasCheatShield: false, shieldHits: 0, droneCount: 0, bombs: 0 }; 
-        // Initialize game
-        score = 0; lives = 3; player = { x: W/2, y: H-80, invincible: 0, shootCooldown: 0, bombs: 0, shieldHits: 0, droneCount: 0, hasCheatShield: false };
-        enemies = []; playerBullets = []; enemyBullets = []; particles = []; floatingTexts = [];
-        
-        document.getElementById('start-btn').addEventListener('click', () => {
-            gameRunning = true; gamePaused = false; score = 0; lives = 3; currentLevel = 1;
-            enemiesDestroyedCount = 0; bossActive = false; playerWeaponLevel = 1; boss = null;
-            player = { x: W/2, y: H-80, invincible: 0, shootCooldown: 0, bombs: 0, shieldHits: 0, droneCount: 0, hasCheatShield: false };
-enemies = []; playerBullets = []; enemyBullets = []; particles = []; floatingTexts = [];
+            enemies = []; playerBullets = []; enemyBullets = []; particles = []; floatingTexts = [];
             usedQuizIndices = []; enemiesDestroyedCount = 0; currentLevel = 1; bossActive = false; playerWeaponLevel = 1; boss = null;
             isDragging = false; targetX = null; targetY = null;
             enemiesSpawnedCount = 0; 
@@ -1374,11 +1172,9 @@ enemies = []; playerBullets = []; enemyBullets = []; particles = []; floatingTex
             stopFireworks();
 
             gameRunning = true; gamePaused = false;
-            usedQuizIndices = []; reviveCount = 0; isWinning = false;
-            spawnTimer = 0;
-document.getElementById('hud').classList.remove('hidden');
-showScreen(null);
-updateHUD();
+            document.getElementById('hud').classList.remove('hidden');
+            showScreen(null);
+            updateHUD();
             gameLoopAnimId = requestAnimationFrame(gameLoop);
         };
 
@@ -1394,12 +1190,7 @@ updateHUD();
             }
         }
         titleScreenLoop();
-            gameLoop();
-        });
 
-        document.getElementById('restart-btn').addEventListener('click', () => {
-            document.getElementById('start-btn').click();
-        });
-</script>
+    </script>
 </body>
 </html>
